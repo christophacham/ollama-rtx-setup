@@ -4,11 +4,10 @@
     Optimized for NVIDIA RTX 5090 (32GB VRAM)
 
 .DESCRIPTION
-    This script automates the complete setup of Ollama with PAL MCP Server:
-    - Installs Ollama if not present
-    - Downloads optimal models for 32GB VRAM
+    Smart setup script that:
+    - Only installs Ollama if not already present
+    - Only downloads models that aren't already installed
     - Configures .env file for PAL MCP
-    - Updates custom_models.json with model definitions
     - Verifies everything works correctly
 
 .NOTES
@@ -21,6 +20,7 @@ param(
     [switch]$SkipModels,
     [switch]$MinimalModels,
     [switch]$AllModels,
+    [switch]$ForceDownload,
     [switch]$Help
 )
 
@@ -30,6 +30,7 @@ function Write-Info { param($msg) Write-Host "[INFO] $msg" -ForegroundColor Cyan
 function Write-Warn { param($msg) Write-Host "[WARN] $msg" -ForegroundColor Yellow }
 function Write-Err { param($msg) Write-Host "[ERROR] $msg" -ForegroundColor Red }
 function Write-Step { param($step, $msg) Write-Host "`n=== Step $step : $msg ===" -ForegroundColor Magenta }
+function Write-Skip { param($msg) Write-Host "[SKIP] $msg" -ForegroundColor DarkGray }
 
 # Banner
 function Show-Banner {
@@ -56,12 +57,14 @@ Options:
     -SkipModels      Skip model downloads
     -MinimalModels   Download only essential models (qwen2.5-coder:32b)
     -AllModels       Download all recommended models for 32GB VRAM
+    -ForceDownload   Re-download models even if already installed
     -Help            Show this help message
 
 Examples:
-    .\setup-ollama.ps1                    # Full setup with core models
+    .\setup-ollama.ps1                    # Smart setup (skips existing)
     .\setup-ollama.ps1 -MinimalModels     # Quick setup with one model
     .\setup-ollama.ps1 -AllModels         # Download all 5 recommended models
+    .\setup-ollama.ps1 -ForceDownload     # Re-download all models
     .\setup-ollama.ps1 -SkipModels        # Configure only, no downloads
 
 Models for 32GB VRAM:
@@ -73,14 +76,12 @@ Models for 32GB VRAM:
     Additional (-AllModels):
       - codellama:34b      (~20GB) - Meta's coding model
       - deepseek-coder:33b (~19GB) - Alternative coder
-"@
-}
 
-# Check if running as admin (not required but helpful)
-function Test-Administrator {
-    $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = New-Object System.Security.Principal.WindowsPrincipal($identity)
-    return $principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
+Smart Features:
+    - Only installs Ollama if not already present
+    - Only downloads models that aren't already installed
+    - Shows which models are skipped vs downloaded
+"@
 }
 
 # Check NVIDIA GPU
@@ -94,7 +95,6 @@ function Get-GPUInfo {
             if ($gpuInfo) {
                 Write-Success "NVIDIA GPU detected: $gpuInfo"
 
-                # Parse VRAM
                 if ($gpuInfo -match "(\d+)\s*MiB") {
                     $vramMB = [int]$matches[1]
                     $vramGB = [math]::Round($vramMB / 1024, 1)
@@ -125,19 +125,82 @@ function Test-OllamaInstalled {
     return $null -ne $ollama
 }
 
+# Get installed models from Ollama
+function Get-InstalledModels {
+    $installed = @{}
+
+    try {
+        $response = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -Method Get -TimeoutSec 5 -ErrorAction Stop
+        if ($response.models) {
+            foreach ($model in $response.models) {
+                # Store by name (normalize the name)
+                $name = $model.name
+                $installed[$name] = @{
+                    Name = $name
+                    Size = $model.size
+                    Modified = $model.modified_at
+                }
+            }
+        }
+    } catch {
+        # Try using ollama list command as fallback
+        try {
+            $listOutput = ollama list 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $lines = $listOutput -split "`n" | Select-Object -Skip 1
+                foreach ($line in $lines) {
+                    if ($line -match "^(\S+)") {
+                        $name = $matches[1]
+                        $installed[$name] = @{ Name = $name; Size = 0; Modified = $null }
+                    }
+                }
+            }
+        } catch {}
+    }
+
+    return $installed
+}
+
+# Check if a specific model is installed
+function Test-ModelInstalled {
+    param([string]$ModelName, [hashtable]$InstalledModels)
+
+    # Direct match
+    if ($InstalledModels.ContainsKey($ModelName)) {
+        return $true
+    }
+
+    # Try without tag (e.g., "qwen3:32b" matches "qwen3:32b")
+    foreach ($key in $InstalledModels.Keys) {
+        if ($key -eq $ModelName -or $key.StartsWith("$ModelName:") -or $ModelName.StartsWith("$key:")) {
+            return $true
+        }
+        # Also check if base names match
+        $keyBase = ($key -split ":")[0]
+        $modelBase = ($ModelName -split ":")[0]
+        $keyTag = if ($key -match ":(.+)$") { $matches[1] } else { "latest" }
+        $modelTag = if ($ModelName -match ":(.+)$") { $matches[1] } else { "latest" }
+
+        if ($keyBase -eq $modelBase -and $keyTag -eq $modelTag) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
 # Install Ollama
 function Install-Ollama {
-    Write-Step "1" "Installing Ollama"
+    Write-Step "1" "Checking Ollama Installation"
 
     if (Test-OllamaInstalled) {
         $version = ollama --version 2>$null
-        Write-Success "Ollama is already installed: $version"
+        Write-Skip "Ollama already installed: $version"
         return $true
     }
 
     Write-Info "Ollama not found. Installing via winget..."
 
-    # Check if winget is available
     $winget = Get-Command winget -ErrorAction SilentlyContinue
     if (-not $winget) {
         Write-Err "winget not found. Please install Ollama manually from https://ollama.com/download"
@@ -166,23 +229,20 @@ function Install-Ollama {
 
 # Start Ollama service
 function Start-OllamaService {
-    Write-Step "2" "Starting Ollama Service"
+    Write-Step "2" "Checking Ollama Service"
 
-    # Check if already running
     try {
         $response = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -Method Get -TimeoutSec 5 -ErrorAction SilentlyContinue
-        Write-Success "Ollama service is already running"
+        Write-Skip "Ollama service already running"
         return $true
     } catch {
         Write-Info "Ollama service not running. Starting..."
     }
 
-    # Start Ollama in background
     try {
         Start-Process -FilePath "ollama" -ArgumentList "serve" -WindowStyle Hidden
         Start-Sleep -Seconds 3
 
-        # Verify it started
         $response = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -Method Get -TimeoutSec 10 -ErrorAction Stop
         Write-Success "Ollama service started successfully"
         return $true
@@ -193,11 +253,11 @@ function Start-OllamaService {
     }
 }
 
-# Download models
+# Download models (smart - only missing ones)
 function Install-Models {
-    param([bool]$Minimal, [bool]$All)
+    param([bool]$Minimal, [bool]$All, [bool]$Force)
 
-    Write-Step "3" "Downloading Models"
+    Write-Step "3" "Checking Models"
 
     # Define models
     $coreModels = @(
@@ -213,27 +273,64 @@ function Install-Models {
 
     # Select models based on flags
     if ($Minimal) {
-        $models = @($coreModels[0])  # Just qwen2.5-coder:32b
-        Write-Info "Minimal mode: Downloading only qwen2.5-coder:32b"
+        $targetModels = @($coreModels[0])
+        Write-Info "Minimal mode: Targeting qwen2.5-coder:32b only"
     } elseif ($All) {
-        $models = $coreModels + $extraModels
-        Write-Info "Full mode: Downloading all 5 recommended models"
+        $targetModels = $coreModels + $extraModels
+        Write-Info "Full mode: Targeting all 5 recommended models"
     } else {
-        $models = $coreModels
-        Write-Info "Standard mode: Downloading 3 core models"
+        $targetModels = $coreModels
+        Write-Info "Standard mode: Targeting 3 core models"
     }
 
-    # Show what we're downloading
-    Write-Host "`nModels to download:" -ForegroundColor Yellow
-    foreach ($model in $models) {
+    # Get currently installed models
+    Write-Info "Checking installed models..."
+    $installedModels = Get-InstalledModels
+
+    if ($installedModels.Count -gt 0) {
+        Write-Info "Found $($installedModels.Count) installed model(s)"
+    }
+
+    # Determine which models need downloading
+    $toDownload = @()
+    $alreadyInstalled = @()
+
+    foreach ($model in $targetModels) {
+        if (-not $Force -and (Test-ModelInstalled -ModelName $model.Name -InstalledModels $installedModels)) {
+            $alreadyInstalled += $model
+        } else {
+            $toDownload += $model
+        }
+    }
+
+    # Show status
+    Write-Host ""
+    if ($alreadyInstalled.Count -gt 0) {
+        Write-Host "Already installed (skipping):" -ForegroundColor Green
+        foreach ($model in $alreadyInstalled) {
+            Write-Host "  [OK] $($model.Name)" -ForegroundColor Green
+        }
+    }
+
+    if ($toDownload.Count -eq 0) {
+        Write-Host ""
+        Write-Success "All target models are already installed!"
+        return $true
+    }
+
+    Write-Host ""
+    Write-Host "Models to download:" -ForegroundColor Yellow
+    foreach ($model in $toDownload) {
         Write-Host "  - $($model.Name) $($model.Size) - $($model.Desc)"
     }
     Write-Host ""
 
-    # Download each model
+    # Download missing models
     $successCount = 0
-    foreach ($model in $models) {
-        Write-Info "Downloading $($model.Name)..."
+    $totalToDownload = $toDownload.Count
+
+    foreach ($model in $toDownload) {
+        Write-Info "Downloading $($model.Name) ($($successCount + 1)/$totalToDownload)..."
         Write-Host "  This may take 15-25 minutes depending on your connection speed" -ForegroundColor Gray
 
         try {
@@ -249,8 +346,11 @@ function Install-Models {
         }
     }
 
-    Write-Success "Downloaded $successCount of $($models.Count) models"
-    return $successCount -gt 0
+    Write-Host ""
+    Write-Success "Downloaded $successCount of $totalToDownload models"
+    Write-Info "Total models now available: $($alreadyInstalled.Count + $successCount)"
+
+    return $successCount -gt 0 -or $alreadyInstalled.Count -gt 0
 }
 
 # Configure .env file
@@ -263,7 +363,6 @@ function Update-EnvFile {
     $envFile = Join-Path $scriptDir ".env"
     $envExample = Join-Path $scriptDir ".env.example"
 
-    # Create .env from example if it doesn't exist
     if (-not (Test-Path $envFile)) {
         if (Test-Path $envExample) {
             Copy-Item $envExample $envFile
@@ -274,17 +373,14 @@ function Update-EnvFile {
         }
     }
 
-    # Read current content
     $content = Get-Content $envFile -Raw -ErrorAction SilentlyContinue
     if (-not $content) { $content = "" }
 
-    # Check if Ollama config already exists
     if ($content -match "CUSTOM_API_URL.*localhost:11434") {
-        Write-Success "Ollama configuration already present in .env"
+        Write-Skip "Ollama configuration already present in .env"
         return $true
     }
 
-    # Add Ollama configuration
     $ollamaConfig = @"
 
 # =============================================
@@ -297,7 +393,6 @@ CUSTOM_MODEL_NAME=qwen2.5-coder:32b
 
 "@
 
-    # Append to .env
     Add-Content -Path $envFile -Value $ollamaConfig
     Write-Success "Added Ollama configuration to .env"
     return $true
@@ -312,7 +407,12 @@ function Update-CustomModels {
 
     $configPath = Join-Path $scriptDir "conf\custom_models.json"
 
-    # New model definitions for 32GB VRAM
+    # Check if conf directory exists, if not use current directory
+    $confDir = Join-Path $scriptDir "conf"
+    if (-not (Test-Path $confDir)) {
+        $configPath = Join-Path $scriptDir "custom_models.json"
+    }
+
     $newConfig = @{
         "_README" = @{
             "description" = "Model metadata for local/self-hosted OpenAI-compatible endpoints (Custom provider)."
@@ -388,6 +488,32 @@ function Update-CustomModels {
                 "intelligence_score" = 15
             },
             @{
+                "model_name" = "llama3.1:8b"
+                "aliases" = @("llama3.1", "llama-8b", "fast-search")
+                "context_window" = 131072
+                "max_output_tokens" = 32768
+                "supports_extended_thinking" = $false
+                "supports_json_mode" = $true
+                "supports_function_calling" = $true
+                "supports_images" = $false
+                "max_image_size_mb" = 0.0
+                "description" = "Llama 3.1 8B - Fast model for web search, tool calling enabled"
+                "intelligence_score" = 12
+            },
+            @{
+                "model_name" = "mistral:7b"
+                "aliases" = @("mistral", "mistral-7b", "quick")
+                "context_window" = 32768
+                "max_output_tokens" = 8192
+                "supports_extended_thinking" = $false
+                "supports_json_mode" = $true
+                "supports_function_calling" = $true
+                "supports_images" = $false
+                "max_image_size_mb" = 0.0
+                "description" = "Mistral 7B - Efficient model for quick queries"
+                "intelligence_score" = 10
+            },
+            @{
                 "model_name" = "llama3.2"
                 "aliases" = @("local-llama", "ollama-llama", "llama")
                 "context_window" = 128000
@@ -403,14 +529,12 @@ function Update-CustomModels {
         )
     }
 
-    # Backup existing config
     if (Test-Path $configPath) {
         $backupPath = "$configPath.backup.$(Get-Date -Format 'yyyyMMdd-HHmmss')"
         Copy-Item $configPath $backupPath
         Write-Info "Backed up existing config to $backupPath"
     }
 
-    # Write new config
     $newConfig | ConvertTo-Json -Depth 10 | Out-File $configPath -Encoding utf8
     Write-Success "Updated custom_models.json with 32GB VRAM optimized models"
     return $true
@@ -422,7 +546,6 @@ function Test-Setup {
 
     $allGood = $true
 
-    # Check Ollama
     Write-Info "Checking Ollama installation..."
     if (Test-OllamaInstalled) {
         Write-Success "Ollama is installed"
@@ -431,15 +554,13 @@ function Test-Setup {
         $allGood = $false
     }
 
-    # Check Ollama service
     Write-Info "Checking Ollama service..."
     try {
         $response = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -Method Get -TimeoutSec 5 -ErrorAction Stop
         Write-Success "Ollama service is running"
 
-        # List installed models
         if ($response.models -and $response.models.Count -gt 0) {
-            Write-Success "Installed models:"
+            Write-Success "Installed models: $($response.models.Count)"
             foreach ($model in $response.models) {
                 $sizeGB = [math]::Round($model.size / 1GB, 1)
                 Write-Host "    - $($model.name) (${sizeGB}GB)" -ForegroundColor Gray
@@ -452,7 +573,6 @@ function Test-Setup {
         $allGood = $false
     }
 
-    # Check .env
     $scriptDir = Split-Path -Parent $MyInvocation.ScriptName
     if (-not $scriptDir) { $scriptDir = Get-Location }
     $envFile = Join-Path $scriptDir ".env"
@@ -466,8 +586,7 @@ function Test-Setup {
             Write-Warn ".env exists but Ollama config may be missing"
         }
     } else {
-        Write-Err ".env file not found"
-        $allGood = $false
+        Write-Warn ".env file not found (optional)"
     }
 
     return $allGood
@@ -491,7 +610,6 @@ function Show-Complete {
         Write-Host '     "Use deepseek-r1 to debug this function"' -ForegroundColor Cyan
         Write-Host '     "Use qwen3 for general analysis"' -ForegroundColor Cyan
         Write-Host ""
-        Write-Host "Documentation: docs/OLLAMA_SETUP.md" -ForegroundColor Gray
     } else {
         Write-Host "========================================" -ForegroundColor Yellow
         Write-Host "  SETUP INCOMPLETE                      " -ForegroundColor Yellow
@@ -520,7 +638,7 @@ function Main {
     # Detect GPU
     $vram = Get-GPUInfo
 
-    # Install Ollama
+    # Install Ollama (only if needed)
     if (-not $SkipInstall) {
         if (-not (Install-Ollama)) {
             $success = $false
@@ -529,16 +647,16 @@ function Main {
         Write-Info "Skipping Ollama installation check"
     }
 
-    # Start service
+    # Start service (only if needed)
     if ($success -and -not $SkipInstall) {
         if (-not (Start-OllamaService)) {
             $success = $false
         }
     }
 
-    # Download models
+    # Download models (only missing ones)
     if ($success -and -not $SkipModels) {
-        if (-not (Install-Models -Minimal:$MinimalModels -All:$AllModels)) {
+        if (-not (Install-Models -Minimal:$MinimalModels -All:$AllModels -Force:$ForceDownload)) {
             Write-Warn "Some models failed to download, but continuing..."
         }
     } else {
