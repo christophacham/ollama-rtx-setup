@@ -1,0 +1,86 @@
+# Open WebUI Stack for Ollama
+# ChatGPT-like interface with built-in web search
+#
+# Usage:
+#   # With GPU (RTX 5090)
+#   docker-compose -f docker-compose-openwebui.yml --profile gpu up -d
+#
+#   # CPU only
+#   docker-compose -f docker-compose-openwebui.yml up -d
+#
+# Access:
+#   Open WebUI: http://localhost:3000
+#
+# Web Search Setup:
+#   1. Open http://localhost:3000
+#   2. Create account (first user becomes admin)
+#   3. Go to Settings > Web Search
+#   4. Enable and select provider (DuckDuckGo = no API key)
+
+version: '3.8'
+
+services:
+  # Open WebUI with bundled Ollama - GPU version
+  open-webui-gpu:
+    image: ghcr.io/open-webui/open-webui:ollama
+    container_name: open-webui
+    profiles:
+      - gpu
+    ports:
+      - "3000:8080"
+    volumes:
+      - ollama-data:/root/.ollama
+      - open-webui-data:/app/backend/data
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - WEBUI_AUTH=true
+      - ENABLE_RAG_WEB_SEARCH=true
+      - RAG_WEB_SEARCH_ENGINE=duckduckgo
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # Open WebUI with bundled Ollama - CPU version
+  open-webui-cpu:
+    image: ghcr.io/open-webui/open-webui:ollama
+    container_name: open-webui
+    profiles:
+      - default
+      - cpu
+    ports:
+      - "3000:8080"
+    volumes:
+      - ollama-data:/root/.ollama
+      - open-webui-data:/app/backend/data
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - WEBUI_AUTH=true
+      - ENABLE_RAG_WEB_SEARCH=true
+      - RAG_WEB_SEARCH_ENGINE=duckduckgo
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # Optional: Standalone SearXNG for enhanced privacy
+  # Uncomment to use with Open WebUI's SearXNG integration
+  # searxng:
+  #   image: searxng/searxng:latest
+  #   container_name: searxng-openwebui
+  #   ports:
+  #     - "4000:8080"
+  #   environment:
+  #     - SEARXNG_BASE_URL=http://localhost:4000
+  #   restart: unless-stopped
+
+volumes:
+  ollama-data:
+    name: ollama-data
+  open-webui-data:
+    name: open-webui-data
