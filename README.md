@@ -72,6 +72,18 @@ Complete setup for running powerful local AI models with Ollama on NVIDIA RTX 50
 | **phi4:14b** | ~9GB | Reasoning | ~11GB | 32K | Efficient reasoning, function calling |
 | **mistral:7b** | ~4GB | Quick queries | ~5GB | 32K | Lightweight, good for simple tasks |
 
+### Uncensored Models (No Content Filters)
+
+Models with alignment/safety filters removed. Use responsibly.
+
+| Model | Size | Best For | VRAM | Author |
+|-------|------|----------|------|--------|
+| **dolphin3:8b** | ~5GB | General, agentic | ~6GB | Eric Hartford |
+| **dolphin-mistral:7b** | ~4GB | Coding | ~5GB | Eric Hartford |
+| **wizard-vicuna-uncensored:13b** | ~8GB | Assistant | ~10GB | Eric Hartford |
+| **llama2-uncensored:7b** | ~4GB | General | ~5GB | George Sung |
+| **dolphin-phi** | ~2GB | Lightweight | ~3GB | Eric Hartford |
+
 ## Setup Scripts
 
 ### `setup-ollama.ps1`
@@ -83,6 +95,16 @@ Installs Ollama and downloads optimal models:
 .\setup-ollama.ps1 -MinimalModels   # Just qwen2.5-coder:32b
 .\setup-ollama.ps1 -AllModels       # All 5 recommended models
 .\setup-ollama.ps1 -Help            # Show options
+```
+
+### `setup-uncensored-models.ps1`
+
+Downloads uncensored models (requires Ollama already installed):
+
+```powershell
+.\setup-uncensored-models.ps1              # Install missing uncensored models
+.\setup-uncensored-models.ps1 -ForceDownload   # Re-download all
+.\setup-uncensored-models.ps1 -Help            # Show options
 ```
 
 ### `setup-ollama-websearch.ps1`
@@ -186,6 +208,7 @@ $env:OLLAMA_HOST = "0.0.0.0"
 | File | Description |
 |------|-------------|
 | `setup-ollama.ps1` | Main Ollama setup script |
+| `setup-uncensored-models.ps1` | Uncensored models installer |
 | `setup-ollama-websearch.ps1` | Web search setup script |
 | `docker-compose-openwebui.yml` | Open WebUI Docker config |
 | `docker-compose-perplexica.yml` | Perplexica + SearXNG Docker config |

@@ -126,6 +126,61 @@
       "supports_function_calling": true,
       "description": "Mistral 7B - Lightweight model for quick queries",
       "intelligence_score": 10
+    },
+    {
+      "model_name": "dolphin3:8b",
+      "aliases": ["dolphin3", "dolphin", "uncensored"],
+      "context_window": 131072,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "description": "Dolphin 3 8B - Uncensored, general purpose, agentic (Eric Hartford)",
+      "intelligence_score": 13
+    },
+    {
+      "model_name": "dolphin-mistral:7b",
+      "aliases": ["dolphin-mistral", "dolphin-code"],
+      "context_window": 32768,
+      "max_output_tokens": 8192,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "description": "Dolphin Mistral 7B - Uncensored, excels at coding (Eric Hartford)",
+      "intelligence_score": 12
+    },
+    {
+      "model_name": "wizard-vicuna-uncensored:13b",
+      "aliases": ["wizard-vicuna", "wizard-uncensored", "vicuna"],
+      "context_window": 4096,
+      "max_output_tokens": 2048,
+      "supports_extended_thinking": false,
+      "supports_json_mode": false,
+      "supports_function_calling": false,
+      "description": "Wizard Vicuna 13B - Classic uncensored assistant (Eric Hartford)",
+      "intelligence_score": 11
+    },
+    {
+      "model_name": "llama2-uncensored:7b",
+      "aliases": ["llama2-uncensored", "llama-uncensored"],
+      "context_window": 4096,
+      "max_output_tokens": 2048,
+      "supports_extended_thinking": false,
+      "supports_json_mode": false,
+      "supports_function_calling": false,
+      "description": "Llama 2 Uncensored 7B - Original uncensored Llama 2 (George Sung)",
+      "intelligence_score": 10
+    },
+    {
+      "model_name": "dolphin-phi",
+      "aliases": ["dolphin-phi", "phi-uncensored"],
+      "context_window": 2048,
+      "max_output_tokens": 1024,
+      "supports_extended_thinking": false,
+      "supports_json_mode": false,
+      "supports_function_calling": false,
+      "description": "Dolphin Phi 2.7B - Lightweight uncensored (Eric Hartford)",
+      "intelligence_score": 8
     }
   ]
 }
