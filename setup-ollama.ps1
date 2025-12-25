@@ -174,7 +174,7 @@ function Test-ModelInstalled {
 
     # Try without tag (e.g., "qwen3:32b" matches "qwen3:32b")
     foreach ($key in $InstalledModels.Keys) {
-        if ($key -eq $ModelName -or $key.StartsWith("$ModelName:") -or $ModelName.StartsWith("$key:")) {
+        if ($key -eq $ModelName -or $key.StartsWith("${ModelName}:") -or $ModelName.StartsWith("${key}:")) {
             return $true
         }
         # Also check if base names match
