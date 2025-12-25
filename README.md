@@ -107,6 +107,23 @@ Downloads uncensored models (requires Ollama already installed):
 .\setup-uncensored-models.ps1 -Help            # Show options
 ```
 
+### `backup-ollama-models.ps1`
+
+Backup and restore your Ollama models to/from external storage:
+
+```powershell
+.\backup-ollama-models.ps1                            # Interactive mode
+.\backup-ollama-models.ps1 -Mode Backup -Path "F:\Backups\Ollama"
+.\backup-ollama-models.ps1 -Mode Restore -Path "F:\Backups\Ollama"
+.\backup-ollama-models.ps1 -Mode Info                 # Show storage info
+```
+
+**Features:**
+- Uses `robocopy` for reliable large file transfers with progress
+- Automatically stops Ollama before operations
+- Option to set `OLLAMA_MODELS` env var to use backup location directly
+- Disk space verification before backup
+
 ### `setup-ollama-websearch.ps1`
 
 Adds web search capabilities:
@@ -209,6 +226,7 @@ $env:OLLAMA_HOST = "0.0.0.0"
 |------|-------------|
 | `setup-ollama.ps1` | Main Ollama setup script |
 | `setup-uncensored-models.ps1` | Uncensored models installer |
+| `backup-ollama-models.ps1` | Backup/restore models to external storage |
 | `setup-ollama-websearch.ps1` | Web search setup script |
 | `docker-compose-openwebui.yml` | Open WebUI Docker config |
 | `docker-compose-perplexica.yml` | Perplexica + SearXNG Docker config |
