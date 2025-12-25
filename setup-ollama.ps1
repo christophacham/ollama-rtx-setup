@@ -63,19 +63,21 @@ Options:
 Examples:
     .\setup-ollama.ps1                    # Smart setup (skips existing)
     .\setup-ollama.ps1 -MinimalModels     # Quick setup with one model
-    .\setup-ollama.ps1 -AllModels         # Download all 5 recommended models
+    .\setup-ollama.ps1 -AllModels         # Download all 7 recommended models
     .\setup-ollama.ps1 -ForceDownload     # Re-download all models
     .\setup-ollama.ps1 -SkipModels        # Configure only, no downloads
 
-Models for 32GB VRAM:
+Models for 32GB VRAM (Updated Dec 2025):
     Core (default):
-      - qwen2.5-coder:32b  (~19GB) - Best coding model
-      - deepseek-r1:32b    (~19GB) - Best reasoning model
-      - qwen3:32b          (~19GB) - Best general model
+      - qwen2.5-coder:32b  (~19GB) - Best coding model (rivals GPT-4o)
+      - deepseek-r1:32b    (~20GB) - Best reasoning (v0528, approaches O3)
+      - qwen3:32b          (~19GB) - Dual thinking modes
 
     Additional (-AllModels):
+      - phi4:14b           (~9GB)  - Microsoft's efficient reasoning
+      - gemma3:27b         (~16GB) - Google's latest (outperforms 405B)
       - codellama:34b      (~20GB) - Meta's coding model
-      - deepseek-coder:33b (~19GB) - Alternative coder
+      - deepseek-coder:33b (~19GB) - Alternative coder (87 languages)
 
 Smart Features:
     - Only installs Ollama if not already present
@@ -259,16 +261,18 @@ function Install-Models {
 
     Write-Step "3" "Checking Models"
 
-    # Define models
+    # Define models (Updated Dec 2025)
     $coreModels = @(
-        @{ Name = "qwen2.5-coder:32b"; Desc = "Best coding model (92 languages)"; Size = "~19GB" },
-        @{ Name = "deepseek-r1:32b"; Desc = "Best reasoning model"; Size = "~19GB" },
-        @{ Name = "qwen3:32b"; Desc = "Latest general-purpose model"; Size = "~19GB" }
+        @{ Name = "qwen2.5-coder:32b"; Desc = "Best coding model (rivals GPT-4o)"; Size = "~19GB" },
+        @{ Name = "deepseek-r1:32b"; Desc = "Best reasoning (v0528, approaches O3)"; Size = "~20GB" },
+        @{ Name = "qwen3:32b"; Desc = "Dual thinking modes, surpasses QwQ"; Size = "~19GB" }
     )
 
     $extraModels = @(
+        @{ Name = "phi4:14b"; Desc = "Microsoft's efficient reasoning (rivals 70B)"; Size = "~9GB" },
+        @{ Name = "gemma3:27b"; Desc = "Google's latest (outperforms 405B)"; Size = "~16GB" },
         @{ Name = "codellama:34b"; Desc = "Meta's premier coding model"; Size = "~20GB" },
-        @{ Name = "deepseek-coder:33b"; Desc = "Strong coding alternative"; Size = "~19GB" }
+        @{ Name = "deepseek-coder:33b"; Desc = "Strong coding alternative (87 langs)"; Size = "~19GB" }
     )
 
     # Select models based on flags
@@ -277,7 +281,7 @@ function Install-Models {
         Write-Info "Minimal mode: Targeting qwen2.5-coder:32b only"
     } elseif ($All) {
         $targetModels = $coreModels + $extraModels
-        Write-Info "Full mode: Targeting all 5 recommended models"
+        Write-Info "Full mode: Targeting all 7 recommended models"
     } else {
         $targetModels = $coreModels
         Write-Info "Standard mode: Targeting 3 core models"
@@ -420,6 +424,7 @@ function Update-CustomModels {
             "usage" = "Each entry will be advertised by the Custom provider. Aliases are case-insensitive."
             "field_notes" = "Matches providers/shared/model_capabilities.py."
             "updated_by" = "setup-ollama.ps1 - Optimized for RTX 5090 (32GB VRAM)"
+            "last_updated" = "December 2025"
         }
         "models" = @(
             @{
@@ -432,21 +437,21 @@ function Update-CustomModels {
                 "supports_function_calling" = $false
                 "supports_images" = $false
                 "max_image_size_mb" = 0.0
-                "description" = "Qwen 2.5 Coder 32B - Best local coding model, 92 languages, matches GitHub Copilot"
+                "description" = "Qwen 2.5 Coder 32B - Best local coding model, 92 languages, rivals GPT-4o"
                 "intelligence_score" = 18
             },
             @{
                 "model_name" = "deepseek-r1:32b"
                 "aliases" = @("deepseek-r1", "deepseek", "r1", "reasoning")
-                "context_window" = 131072
+                "context_window" = 128000
                 "max_output_tokens" = 32768
                 "supports_extended_thinking" = $true
                 "supports_json_mode" = $true
                 "supports_function_calling" = $false
                 "supports_images" = $false
                 "max_image_size_mb" = 0.0
-                "description" = "DeepSeek-R1 32B - Best local reasoning model with chain-of-thought"
-                "intelligence_score" = 17
+                "description" = "DeepSeek-R1 32B (v0528) - Best local reasoning, approaches O3/Gemini 2.5 Pro"
+                "intelligence_score" = 18
             },
             @{
                 "model_name" = "qwen3:32b"
@@ -458,8 +463,34 @@ function Update-CustomModels {
                 "supports_function_calling" = $false
                 "supports_images" = $false
                 "max_image_size_mb" = 0.0
-                "description" = "Qwen3 32B - Latest generation general-purpose model with enhanced reasoning"
+                "description" = "Qwen3 32B - Dual thinking/non-thinking modes, surpasses QwQ"
                 "intelligence_score" = 17
+            },
+            @{
+                "model_name" = "gemma3:27b"
+                "aliases" = @("gemma3", "gemma", "google")
+                "context_window" = 128000
+                "max_output_tokens" = 32768
+                "supports_extended_thinking" = $false
+                "supports_json_mode" = $true
+                "supports_function_calling" = $false
+                "supports_images" = $false
+                "max_image_size_mb" = 0.0
+                "description" = "Gemma 3 27B - Google's latest, outperforms Llama 405B on LMArena"
+                "intelligence_score" = 17
+            },
+            @{
+                "model_name" = "phi4:14b"
+                "aliases" = @("phi4", "phi", "microsoft")
+                "context_window" = 32768
+                "max_output_tokens" = 16384
+                "supports_extended_thinking" = $true
+                "supports_json_mode" = $true
+                "supports_function_calling" = $true
+                "supports_images" = $false
+                "max_image_size_mb" = 0.0
+                "description" = "Phi-4 14B - Microsoft's efficient model, rivals 70B on reasoning"
+                "intelligence_score" = 16
             },
             @{
                 "model_name" = "codellama:34b"
@@ -471,7 +502,7 @@ function Update-CustomModels {
                 "supports_function_calling" = $false
                 "supports_images" = $false
                 "max_image_size_mb" = 0.0
-                "description" = "CodeLlama 34B - Meta's premier coding model, production-ready code"
+                "description" = "CodeLlama 34B - Meta's premier coding model, 20+ languages"
                 "intelligence_score" = 15
             },
             @{
@@ -484,8 +515,21 @@ function Update-CustomModels {
                 "supports_function_calling" = $false
                 "supports_images" = $false
                 "max_image_size_mb" = 0.0
-                "description" = "DeepSeek Coder 33B - Strong coding model with 80+ languages"
+                "description" = "DeepSeek Coder 33B - Strong coding model, 87 languages"
                 "intelligence_score" = 15
+            },
+            @{
+                "model_name" = "gemma3:12b"
+                "aliases" = @("gemma3-12b", "gemma-fast")
+                "context_window" = 128000
+                "max_output_tokens" = 32768
+                "supports_extended_thinking" = $false
+                "supports_json_mode" = $true
+                "supports_function_calling" = $false
+                "supports_images" = $false
+                "max_image_size_mb" = 0.0
+                "description" = "Gemma 3 12B - Fast Google model, good balance of speed and quality"
+                "intelligence_score" = 14
             },
             @{
                 "model_name" = "llama3.1:8b"
@@ -510,7 +554,7 @@ function Update-CustomModels {
                 "supports_function_calling" = $true
                 "supports_images" = $false
                 "max_image_size_mb" = 0.0
-                "description" = "Mistral 7B - Efficient model for quick queries"
+                "description" = "Mistral 7B - Lightweight model for quick queries"
                 "intelligence_score" = 10
             },
             @{
