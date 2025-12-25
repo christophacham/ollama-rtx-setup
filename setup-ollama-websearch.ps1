@@ -8,10 +8,10 @@
     - Option 1: Open WebUI (recommended) - Beautiful UI with built-in web search
     - Option 2: Perplexica + SearXNG - Full privacy, Perplexity AI alternative
     - Downloads lightweight models optimized for web search tasks
-    - Configures Docker containers and networking
+    - Supports both Docker and Podman container runtimes
 
 .NOTES
-    Requirements: Docker Desktop, Ollama installed
+    Requirements: Docker or Podman, Ollama installed
     Target Hardware: NVIDIA RTX 5090 (32GB VRAM)
 #>
 
@@ -19,10 +19,14 @@ param(
     [ValidateSet("OpenWebUI", "Perplexica", "Both")]
     [string]$Setup = "OpenWebUI",
     [switch]$SkipModels,
-    [switch]$SkipDocker,
+    [switch]$SkipContainers,
     [switch]$Uninstall,
     [switch]$Help
 )
+
+# Script-level container runtime (docker or podman)
+$script:ContainerRuntime = $null
+$script:ComposeCommand = $null
 
 # Colors for output
 function Write-Success { param($msg) Write-Host "[OK] $msg" -ForegroundColor Green }
@@ -58,7 +62,7 @@ Options:
                      - Perplexica - Full privacy with SearXNG
                      - Both - Install both options
     -SkipModels      Skip downloading web search optimized models
-    -SkipDocker      Skip Docker container setup (config only)
+    -SkipContainers  Skip container setup (config only)
     -Uninstall       Remove web search containers
     -Help            Show this help message
 
@@ -67,6 +71,9 @@ Examples:
     .\setup-ollama-websearch.ps1 -Setup Perplexica   # Install Perplexica
     .\setup-ollama-websearch.ps1 -Setup Both         # Install both
     .\setup-ollama-websearch.ps1 -Uninstall          # Remove containers
+
+Container Runtime:
+    Automatically detects Docker or Podman (Docker preferred)
 
 Web Search Options:
     Open WebUI:
@@ -79,32 +86,83 @@ Web Search Options:
       - Perplexity AI alternative
       - 100% private with SearXNG
       - Citations and source references
-      - Access: http://localhost:3000 (frontend)
+      - Access: http://localhost:3002 (frontend)
                 http://localhost:4000 (SearXNG)
 "@
 }
 
-# Check Docker
-function Test-Docker {
-    Write-Step "1" "Checking Docker"
+# Detect container runtime (Docker or Podman)
+function Find-ContainerRuntime {
+    Write-Step "1" "Detecting Container Runtime"
 
+    # Try Docker first
     $docker = Get-Command docker -ErrorAction SilentlyContinue
-    if (-not $docker) {
-        Write-Err "Docker not found. Please install Docker Desktop from https://docker.com"
-        return $false
+    if ($docker) {
+        try {
+            $dockerInfo = docker info 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $script:ContainerRuntime = "docker"
+                $script:ComposeCommand = "docker-compose"
+
+                # Check for docker compose (v2) vs docker-compose (v1)
+                $dockerComposeV2 = docker compose version 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    $script:ComposeCommand = "docker compose"
+                }
+
+                Write-Success "Docker detected and running"
+                Write-Info "Using: $($script:ContainerRuntime) (compose: $($script:ComposeCommand))"
+                return $true
+            }
+        } catch {}
     }
 
-    try {
-        $dockerInfo = docker info 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Write-Err "Docker is not running. Please start Docker Desktop."
-            return $false
-        }
-        Write-Success "Docker is installed and running"
-        return $true
-    } catch {
-        Write-Err "Docker error: $_"
-        return $false
+    # Try Podman if Docker not available
+    $podman = Get-Command podman -ErrorAction SilentlyContinue
+    if ($podman) {
+        try {
+            $podmanInfo = podman info 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $script:ContainerRuntime = "podman"
+                $script:ComposeCommand = "podman-compose"
+
+                # Check for podman compose
+                $podmanCompose = Get-Command podman-compose -ErrorAction SilentlyContinue
+                if (-not $podmanCompose) {
+                    # Try podman compose (built-in)
+                    $podmanComposeBuiltin = podman compose version 2>&1
+                    if ($LASTEXITCODE -eq 0) {
+                        $script:ComposeCommand = "podman compose"
+                    } else {
+                        Write-Warn "podman-compose not found. Install with: pip install podman-compose"
+                    }
+                }
+
+                Write-Success "Podman detected and running"
+                Write-Info "Using: $($script:ContainerRuntime) (compose: $($script:ComposeCommand))"
+                return $true
+            }
+        } catch {}
+    }
+
+    Write-Err "No container runtime found!"
+    Write-Err "Please install Docker Desktop (https://docker.com) or Podman (https://podman.io)"
+    return $false
+}
+
+# Run container command
+function Invoke-Container {
+    param([string[]]$Arguments)
+    & $script:ContainerRuntime @Arguments
+}
+
+# Run compose command
+function Invoke-Compose {
+    param([string[]]$Arguments)
+    if ($script:ComposeCommand -eq "docker compose" -or $script:ComposeCommand -eq "podman compose") {
+        & $script:ContainerRuntime compose @Arguments
+    } else {
+        & $script:ComposeCommand @Arguments
     }
 }
 
@@ -126,24 +184,20 @@ function Test-Ollama {
     }
 }
 
-# Configure Ollama for Docker access
-function Set-OllamaDockerAccess {
-    Write-Step "3" "Configuring Ollama for Docker Access"
+# Configure Ollama for container access
+function Set-OllamaContainerAccess {
+    Write-Step "3" "Configuring Ollama for Container Access"
 
-    # Check if OLLAMA_HOST is set
     $currentHost = $env:OLLAMA_HOST
 
     if ($currentHost -eq "0.0.0.0" -or $currentHost -eq "0.0.0.0:11434") {
-        Write-Success "Ollama already configured for Docker access"
+        Write-Success "Ollama already configured for container access"
         return $true
     }
 
-    Write-Info "Setting OLLAMA_HOST=0.0.0.0 for Docker container access"
+    Write-Info "Setting OLLAMA_HOST=0.0.0.0 for container access"
 
-    # Set for current session
     $env:OLLAMA_HOST = "0.0.0.0"
-
-    # Set permanently for user
     [System.Environment]::SetEnvironmentVariable("OLLAMA_HOST", "0.0.0.0", "User")
 
     Write-Warn "You may need to restart Ollama for changes to take effect"
@@ -156,7 +210,6 @@ function Set-OllamaDockerAccess {
 function Install-WebSearchModels {
     Write-Step "4" "Installing Web Search Optimized Models"
 
-    # Models good for web search (smaller for speed, or larger for quality)
     $models = @(
         @{ Name = "llama3.1:8b"; Desc = "Fast web search queries"; Size = "~5GB" },
         @{ Name = "mistral:7b"; Desc = "Efficient general web tasks"; Size = "~4GB" }
@@ -172,7 +225,6 @@ function Install-WebSearchModels {
         Write-Info "Downloading $($model.Name)..."
 
         try {
-            # Check if already installed
             $installed = ollama list 2>&1 | Select-String $model.Name
             if ($installed) {
                 Write-Success "$($model.Name) already installed"
@@ -198,17 +250,17 @@ function Install-OpenWebUI {
     Write-Step "5" "Installing Open WebUI"
 
     # Check if already running
-    $existing = docker ps -a --filter "name=open-webui" --format "{{.Names}}" 2>&1
+    $existing = Invoke-Container @("ps", "-a", "--filter", "name=open-webui", "--format", "{{.Names}}") 2>&1
     if ($existing -eq "open-webui") {
         Write-Info "Open WebUI container already exists"
 
-        $running = docker ps --filter "name=open-webui" --format "{{.Names}}" 2>&1
+        $running = Invoke-Container @("ps", "--filter", "name=open-webui", "--format", "{{.Names}}") 2>&1
         if ($running -eq "open-webui") {
             Write-Success "Open WebUI is already running at http://localhost:3000"
             return $true
         } else {
             Write-Info "Starting existing container..."
-            docker start open-webui
+            Invoke-Container @("start", "open-webui")
             Write-Success "Open WebUI started at http://localhost:3000"
             return $true
         }
@@ -226,34 +278,38 @@ function Install-OpenWebUI {
         }
     } catch {}
 
-    # Build docker run command
+    # Build container run command
+    $containerArgs = @(
+        "run", "-d",
+        "-p", "3000:8080",
+        "-v", "ollama:/root/.ollama",
+        "-v", "open-webui:/app/backend/data",
+        "--name", "open-webui",
+        "--restart", "always"
+    )
+
+    # Add GPU support if available
     if ($hasGPU) {
-        $dockerCmd = @(
-            "run", "-d",
-            "-p", "3000:8080",
-            "--gpus=all",
-            "-v", "ollama:/root/.ollama",
-            "-v", "open-webui:/app/backend/data",
-            "--add-host=host.docker.internal:host-gateway",
-            "--name", "open-webui",
-            "--restart", "always",
-            "ghcr.io/open-webui/open-webui:ollama"
-        )
-    } else {
-        $dockerCmd = @(
-            "run", "-d",
-            "-p", "3000:8080",
-            "-v", "ollama:/root/.ollama",
-            "-v", "open-webui:/app/backend/data",
-            "--add-host=host.docker.internal:host-gateway",
-            "--name", "open-webui",
-            "--restart", "always",
-            "ghcr.io/open-webui/open-webui:ollama"
-        )
+        if ($script:ContainerRuntime -eq "docker") {
+            $containerArgs += @("--gpus=all")
+        } else {
+            # Podman GPU support
+            $containerArgs += @("--device", "nvidia.com/gpu=all")
+        }
     }
 
+    # Add host gateway
+    if ($script:ContainerRuntime -eq "docker") {
+        $containerArgs += @("--add-host=host.docker.internal:host-gateway")
+    } else {
+        # Podman uses different syntax
+        $containerArgs += @("--add-host=host.docker.internal:host-gateway")
+    }
+
+    $containerArgs += @("ghcr.io/open-webui/open-webui:ollama")
+
     try {
-        $result = & docker @dockerCmd 2>&1
+        $result = Invoke-Container $containerArgs 2>&1
         if ($LASTEXITCODE -eq 0) {
             Write-Success "Open WebUI installed successfully!"
             Write-Host ""
@@ -272,7 +328,7 @@ function Install-OpenWebUI {
             return $false
         }
     } catch {
-        Write-Err "Docker error: $_"
+        Write-Err "Container error: $_"
         return $false
     }
 }
@@ -346,7 +402,6 @@ function New-PerplexicaConfig {
     $scriptDir = Split-Path -Parent $MyInvocation.ScriptName
     if (-not $scriptDir) { $scriptDir = Get-Location }
 
-    # Create directories
     $perplexicaDir = Join-Path $scriptDir "perplexica"
     $searxngDir = Join-Path $scriptDir "searxng"
 
@@ -354,7 +409,6 @@ function New-PerplexicaConfig {
     New-Item -ItemType Directory -Path $searxngDir -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $perplexicaDir "data") -Force | Out-Null
 
-    # Perplexica config
     $configPath = Join-Path $perplexicaDir "config.toml"
     $configContent = @"
 [GENERAL]
@@ -373,7 +427,6 @@ OLLAMA = "http://host.docker.internal:11434"
     $configContent | Out-File $configPath -Encoding utf8
     Write-Success "Created perplexica/config.toml"
 
-    # SearXNG settings
     $searxngSettingsPath = Join-Path $searxngDir "settings.yml"
     $searxngSettings = @"
 use_default_settings: true
@@ -420,8 +473,7 @@ engines:
 function Install-Perplexica {
     Write-Step "5" "Installing Perplexica + SearXNG"
 
-    # Check if already running
-    $existing = docker ps --filter "name=perplexica" --format "{{.Names}}" 2>&1
+    $existing = Invoke-Container @("ps", "--filter", "name=perplexica", "--format", "{{.Names}}") 2>&1
     if ($existing) {
         Write-Success "Perplexica is already running"
         Write-Host "  Frontend: http://localhost:3002"
@@ -429,17 +481,21 @@ function Install-Perplexica {
         return $true
     }
 
-    # Create config files
     Write-Info "Creating configuration files..."
     New-PerplexicaConfig | Out-Null
 
-    # Create docker-compose file
     $composePath = New-PerplexicaCompose
 
     Write-Info "Starting Perplexica stack (this may take a few minutes)..."
+    Write-Info "Using: $($script:ComposeCommand)"
 
     try {
-        $result = docker-compose -f $composePath up -d 2>&1
+        if ($script:ComposeCommand -eq "docker compose" -or $script:ComposeCommand -eq "podman compose") {
+            $result = & $script:ContainerRuntime compose -f $composePath up -d 2>&1
+        } else {
+            $result = & $script:ComposeCommand -f $composePath up -d 2>&1
+        }
+
         if ($LASTEXITCODE -eq 0) {
             Write-Success "Perplexica installed successfully!"
             Write-Host ""
@@ -459,7 +515,7 @@ function Install-Perplexica {
             return $false
         }
     } catch {
-        Write-Err "Docker Compose error: $_"
+        Write-Err "Compose error: $_"
         return $false
     }
 }
@@ -469,8 +525,8 @@ function Remove-WebSearch {
     Write-Step "X" "Removing Web Search Containers"
 
     Write-Info "Stopping and removing Open WebUI..."
-    docker stop open-webui 2>&1 | Out-Null
-    docker rm open-webui 2>&1 | Out-Null
+    Invoke-Container @("stop", "open-webui") 2>&1 | Out-Null
+    Invoke-Container @("rm", "open-webui") 2>&1 | Out-Null
 
     Write-Info "Stopping and removing Perplexica stack..."
     $scriptDir = Split-Path -Parent $MyInvocation.ScriptName
@@ -478,14 +534,18 @@ function Remove-WebSearch {
     $composePath = Join-Path $scriptDir "docker-compose-perplexica.yml"
 
     if (Test-Path $composePath) {
-        docker-compose -f $composePath down 2>&1 | Out-Null
+        if ($script:ComposeCommand -eq "docker compose" -or $script:ComposeCommand -eq "podman compose") {
+            & $script:ContainerRuntime compose -f $composePath down 2>&1 | Out-Null
+        } else {
+            & $script:ComposeCommand -f $composePath down 2>&1 | Out-Null
+        }
     }
 
-    docker stop searxng perplexica-backend perplexica-frontend 2>&1 | Out-Null
-    docker rm searxng perplexica-backend perplexica-frontend 2>&1 | Out-Null
+    Invoke-Container @("stop", "searxng", "perplexica-backend", "perplexica-frontend") 2>&1 | Out-Null
+    Invoke-Container @("rm", "searxng", "perplexica-backend", "perplexica-frontend") 2>&1 | Out-Null
 
     Write-Success "Web search containers removed"
-    Write-Info "Note: Docker volumes preserved. Use 'docker volume prune' to remove data."
+    Write-Info "Note: Volumes preserved. Use '$($script:ContainerRuntime) volume prune' to remove data."
 
     return $true
 }
@@ -498,6 +558,8 @@ function Show-Complete {
     Write-Host "========================================" -ForegroundColor Green
     Write-Host "  WEB SEARCH SETUP COMPLETE!           " -ForegroundColor Green
     Write-Host "========================================" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Container Runtime: $($script:ContainerRuntime)" -ForegroundColor Gray
     Write-Host ""
 
     switch ($SetupType) {
@@ -538,8 +600,6 @@ function Show-Complete {
     Write-Host "  - deepseek-r1:32b (deep reasoning)"
     Write-Host "  - llama3.1:8b    (fast queries)"
     Write-Host ""
-    Write-Host "Documentation: docs/OLLAMA_SETUP.md" -ForegroundColor Gray
-    Write-Host ""
 }
 
 # Main
@@ -551,28 +611,25 @@ function Main {
         return
     }
 
+    # Detect container runtime first
+    if (-not $SkipContainers) {
+        if (-not (Find-ContainerRuntime)) { return }
+    }
+
     if ($Uninstall) {
         Remove-WebSearch
         return
     }
 
-    # Pre-flight checks
-    if (-not $SkipDocker) {
-        if (-not (Test-Docker)) { return }
-    }
-
     if (-not (Test-Ollama)) { return }
 
-    # Configure Ollama
-    Set-OllamaDockerAccess | Out-Null
+    Set-OllamaContainerAccess | Out-Null
 
-    # Download models
     if (-not $SkipModels) {
         Install-WebSearchModels | Out-Null
     }
 
-    # Install based on selection
-    if (-not $SkipDocker) {
+    if (-not $SkipContainers) {
         switch ($Setup) {
             "OpenWebUI" {
                 Install-OpenWebUI | Out-Null

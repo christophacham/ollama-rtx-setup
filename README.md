@@ -162,8 +162,10 @@ $env:OLLAMA_HOST = "0.0.0.0"
 - Windows 10/11 (64-bit)
 - NVIDIA GPU with 10GB+ VRAM
 - [Ollama](https://ollama.com/download)
-- [Docker Desktop](https://docker.com) (for web search)
+- [Docker Desktop](https://docker.com) or [Podman](https://podman.io) (for web search)
 - PowerShell 5.1+
+
+**Container Runtime:** Scripts automatically detect Docker or Podman (Docker preferred).
 
 ## Troubleshooting
 
