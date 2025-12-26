@@ -41,23 +41,25 @@ Open http://localhost:3000
 ### First-Time Setup
 
 1. Create an account (first user becomes admin)
-2. Go to **Settings → Admin Settings → Web Search**
-3. Enable web search
-4. Choose a provider:
-   - **DuckDuckGo** - No API key needed (recommended to start)
-   - **Google** - Requires API key
-   - **Brave** - Requires API key (privacy-focused)
-   - **SearXNG** - Self-hosted meta-search
+2. Web search is **pre-configured** with SearXNG (requires Perplexica stack running)
+
+To use a different provider, go to **Settings → Admin Settings → Web Search**:
+- **SearXNG** - Pre-configured, self-hosted (default)
+- **DuckDuckGo** - No API key needed, may have rate limits
+- **Google** - Requires API key
+- **Brave** - Requires API key (privacy-focused)
 
 ### Usage
 
-In any chat, prefix your query with the web search command:
+1. Click the **+** button next to the message input
+2. Toggle **Web Search** on
+3. Type your query - results will include web sources
+
+Or prefix your query with `/web`:
 
 ```
 /web What's the latest version of Node.js?
 ```
-
-Or enable "Auto Web Search" for automatic detection.
 
 ### Why Open WebUI?
 

@@ -438,6 +438,10 @@ function Install-OpenWebUI {
     $ollamaUrl = Get-OllamaHostUrl
     Write-Info "Ollama URL: $ollamaUrl"
 
+    # Derive SearXNG URL from Ollama URL (same host, port 4000)
+    $searxngUrl = $ollamaUrl -replace ':11434', ':4000'
+    Write-Info "SearXNG URL: $searxngUrl"
+
     # Build container run command
     # :cuda tag = CUDA support + connects to external Ollama (no embedded Ollama)
     # :main tag = CPU only + connects to external Ollama
@@ -446,6 +450,10 @@ function Install-OpenWebUI {
         "-p", "3000:8080",
         "-v", "open-webui:/app/backend/data",
         "-e", "OLLAMA_BASE_URL=$ollamaUrl",
+        "-e", "ENABLE_RAG_WEB_SEARCH=true",
+        "-e", "RAG_WEB_SEARCH_ENGINE=searxng",
+        "-e", "SEARXNG_QUERY_URL=$searxngUrl",
+        "-e", "RAG_WEB_SEARCH_RESULT_COUNT=5",
         "--name", "open-webui",
         "--restart", "always"
     )
