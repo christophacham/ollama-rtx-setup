@@ -27,6 +27,51 @@ $script:Results = @()
 # Container runtime
 $script:ContainerRuntime = $null
 
+# Container health checking
+function Get-ContainerHealth {
+    param([string]$Container)
+
+    $result = @{
+        Exists = $false
+        Running = $false
+        RestartCount = 0
+        HealthStatus = $null
+        RestartLoop = $false
+    }
+
+    # Check if exists
+    $exists = & $script:ContainerRuntime ps -a --filter "name=^${Container}$" --format "{{.Names}}" 2>$null
+    if (-not $exists) {
+        return $result
+    }
+    $result.Exists = $true
+
+    # Get status
+    $status = & $script:ContainerRuntime inspect $Container --format "{{.State.Status}}" 2>$null
+    $result.Running = ($status -eq "running")
+
+    # Get restart count
+    $restarts = & $script:ContainerRuntime inspect $Container --format "{{.RestartCount}}" 2>$null
+    $result.RestartCount = [int]$restarts
+    $result.RestartLoop = ($result.RestartCount -gt 3)
+
+    # Get health status if available
+    $health = & $script:ContainerRuntime inspect $Container --format "{{.State.Health.Status}}" 2>$null
+    if ($health -and $health -ne "<no value>") {
+        $result.HealthStatus = $health
+    }
+
+    return $result
+}
+
+function Show-ContainerLogs {
+    param([string]$Container, [int]$Lines = 10)
+    if (-not $Json) {
+        Write-Host "    --- Recent logs from $Container ---" -ForegroundColor Yellow
+        & $script:ContainerRuntime logs --tail $Lines $Container 2>&1 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+    }
+}
+
 # Output helpers
 function Write-Pass {
     param($msg, $detail = "")
@@ -219,30 +264,52 @@ function Test-OpenWebUI {
         return
     }
 
-    # Container running
-    $container = & $script:ContainerRuntime ps --filter "name=open-webui" --format "{{.Names}}" 2>&1
-    if ($container -eq "open-webui") {
-        Write-Pass "Container running"
+    # Get container health info
+    $health = Get-ContainerHealth -Container "open-webui"
 
-        # Check image tag
-        $image = & $script:ContainerRuntime inspect --format "{{.Config.Image}}" open-webui 2>&1
-        if ($image -match ":ollama") {
-            Write-Fail "Using embedded Ollama image" "Should use :cuda or :main"
-        } elseif ($image -match ":cuda") {
-            Write-Pass "Using CUDA image" "no embedded Ollama"
-        } elseif ($image -match ":main") {
-            Write-Pass "Using main image" "no embedded Ollama"
-        } else {
-            Write-Pass "Image tag" $image
-        }
-    } else {
-        $exists = & $script:ContainerRuntime ps -a --filter "name=open-webui" --format "{{.Names}}" 2>&1
-        if ($exists -eq "open-webui") {
-            Write-Fail "Container exists but not running" "Start with: $($script:ContainerRuntime) start open-webui"
-        } else {
-            Write-Skip "Not installed"
-        }
+    if (-not $health.Exists) {
+        Write-Skip "Not installed"
         return
+    }
+
+    if (-not $health.Running) {
+        Write-Fail "Container exists but not running" "Start with: $($script:ContainerRuntime) start open-webui"
+        Show-ContainerLogs -Container "open-webui"
+        return
+    }
+
+    # Check for restart loop
+    if ($health.RestartLoop) {
+        Write-Fail "Container restart loop detected" "$($health.RestartCount) restarts"
+        Show-ContainerLogs -Container "open-webui"
+        return
+    }
+
+    # Container is running
+    $statusDetail = ""
+    if ($health.HealthStatus) {
+        $statusDetail = "health: $($health.HealthStatus)"
+        if ($health.HealthStatus -eq "unhealthy") {
+            Write-Fail "Container running but unhealthy"
+            Show-ContainerLogs -Container "open-webui"
+            return
+        }
+    }
+    if ($health.RestartCount -gt 0) {
+        $statusDetail += $(if ($statusDetail) { ", " } else { "" }) + "$($health.RestartCount) restarts"
+    }
+    Write-Pass "Container running" $statusDetail
+
+    # Check image tag
+    $image = & $script:ContainerRuntime inspect --format "{{.Config.Image}}" open-webui 2>&1
+    if ($image -match ":ollama") {
+        Write-Fail "Using embedded Ollama image" "Should use :cuda or :main"
+    } elseif ($image -match ":cuda") {
+        Write-Pass "Using CUDA image" "no embedded Ollama"
+    } elseif ($image -match ":main") {
+        Write-Pass "Using main image" "no embedded Ollama"
+    } else {
+        Write-Pass "Image tag" $image
     }
 
     # UI accessible
@@ -265,48 +332,73 @@ function Test-Perplexica {
         return
     }
 
-    # Check if any Perplexica containers exist
-    $searxng = & $script:ContainerRuntime ps --filter "name=searxng" --format "{{.Names}}" 2>&1
-    $backend = & $script:ContainerRuntime ps --filter "name=perplexica-backend" --format "{{.Names}}" 2>&1
-    $frontend = & $script:ContainerRuntime ps --filter "name=perplexica-frontend" --format "{{.Names}}" 2>&1
+    # Get health info for all containers
+    $searxngHealth = Get-ContainerHealth -Container "searxng"
+    $backendHealth = Get-ContainerHealth -Container "perplexica-backend"
+    $frontendHealth = Get-ContainerHealth -Container "perplexica-frontend"
 
-    if (-not $searxng -and -not $backend -and -not $frontend) {
+    # Check if any Perplexica containers exist
+    if (-not $searxngHealth.Exists -and -not $backendHealth.Exists -and -not $frontendHealth.Exists) {
         Write-Skip "Not installed" "Run: .\setup-ollama-websearch.ps1 -Setup Perplexica"
         return
     }
 
-    # SearXNG
-    if ($searxng -eq "searxng") {
-        Write-Pass "SearXNG container running"
-        try {
-            $response = Invoke-WebRequest -Uri "http://localhost:4000" -Method Get -TimeoutSec 5 -UseBasicParsing -ErrorAction Stop
-            Write-Pass "SearXNG accessible on :4000"
-        } catch {
-            Write-Fail "SearXNG not accessible on :4000"
+    # Helper function for container status
+    function Test-PerplexicaContainer {
+        param($Name, $Health, $Port, $TestUrl)
+
+        if (-not $Health.Exists) {
+            Write-Fail "$Name container not found"
+            return $false
         }
-    } else {
-        Write-Fail "SearXNG container not running"
+
+        if (-not $Health.Running) {
+            Write-Fail "$Name container not running"
+            Show-ContainerLogs -Container $Name
+            return $false
+        }
+
+        # Check for restart loop
+        if ($Health.RestartLoop) {
+            Write-Fail "$Name restart loop detected" "$($Health.RestartCount) restarts"
+            Show-ContainerLogs -Container $Name
+            return $false
+        }
+
+        # Check health status
+        if ($Health.HealthStatus -eq "unhealthy") {
+            Write-Fail "$Name container unhealthy"
+            Show-ContainerLogs -Container $Name
+            return $false
+        }
+
+        # Container is running
+        $statusDetail = ""
+        if ($Health.HealthStatus) {
+            $statusDetail = "health: $($Health.HealthStatus)"
+        }
+        if ($Health.RestartCount -gt 0) {
+            $statusDetail += $(if ($statusDetail) { ", " } else { "" }) + "$($Health.RestartCount) restarts"
+        }
+        Write-Pass "$Name container running" $statusDetail
+
+        # Test URL accessibility if provided
+        if ($TestUrl) {
+            try {
+                $response = Invoke-WebRequest -Uri $TestUrl -Method Get -TimeoutSec 5 -UseBasicParsing -ErrorAction Stop
+                Write-Pass "$Name accessible on :$Port"
+            } catch {
+                Write-Fail "$Name not accessible on :$Port"
+            }
+        }
+
+        return $true
     }
 
-    # Backend
-    if ($backend -eq "perplexica-backend") {
-        Write-Pass "Backend container running"
-    } else {
-        Write-Fail "Backend container not running"
-    }
-
-    # Frontend
-    if ($frontend -eq "perplexica-frontend") {
-        Write-Pass "Frontend container running"
-        try {
-            $response = Invoke-WebRequest -Uri "http://localhost:3002" -Method Get -TimeoutSec 5 -UseBasicParsing -ErrorAction Stop
-            Write-Pass "Frontend accessible on :3002"
-        } catch {
-            Write-Fail "Frontend not accessible on :3002"
-        }
-    } else {
-        Write-Fail "Frontend container not running"
-    }
+    # Test each container
+    Test-PerplexicaContainer -Name "SearXNG" -Health $searxngHealth -Port 4000 -TestUrl "http://localhost:4000" | Out-Null
+    Test-PerplexicaContainer -Name "Backend" -Health $backendHealth -Port 3001 -TestUrl $null | Out-Null
+    Test-PerplexicaContainer -Name "Frontend" -Health $frontendHealth -Port 3002 -TestUrl "http://localhost:3002" | Out-Null
 }
 
 # Main

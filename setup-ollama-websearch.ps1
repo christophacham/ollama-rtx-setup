@@ -58,6 +58,78 @@ function Write-Warn { param($msg) Write-Host "[WARN] $msg" -ForegroundColor Yell
 function Write-Err { param($msg) Write-Host "[ERROR] $msg" -ForegroundColor Red }
 function Write-Step { param($step, $msg) Write-Host "`n=== Step $step : $msg ===" -ForegroundColor Magenta }
 
+# Container health checking functions
+function Test-ContainerHealth {
+    param([string]$Container)
+
+    # Check if container exists
+    $exists = & $script:ContainerRuntime ps -a --filter "name=^${Container}$" --format "{{.Names}}" 2>$null
+    if (-not $exists) {
+        return @{ Healthy = $false; Reason = "Container does not exist" }
+    }
+
+    # Check if running
+    $status = & $script:ContainerRuntime inspect $Container --format "{{.State.Status}}" 2>$null
+    if ($status -ne "running") {
+        return @{ Healthy = $false; Reason = "Container not running (status: $status)" }
+    }
+
+    # Check restart count (detect restart loops)
+    $restarts = & $script:ContainerRuntime inspect $Container --format "{{.RestartCount}}" 2>$null
+    if ([int]$restarts -gt 3) {
+        return @{ Healthy = $false; Reason = "Restart loop detected ($restarts restarts)" }
+    }
+
+    # Check health status if available
+    $health = & $script:ContainerRuntime inspect $Container --format "{{.State.Health.Status}}" 2>$null
+    if ($health -and $health -ne "" -and $health -ne "healthy" -and $health -ne "<no value>") {
+        return @{ Healthy = $false; Reason = "Health check failing ($health)" }
+    }
+
+    return @{ Healthy = $true; Health = $health }
+}
+
+function Show-ContainerLogs {
+    param(
+        [string]$Container,
+        [int]$Lines = 20
+    )
+    Write-Host "`n--- Last $Lines lines of $Container logs ---" -ForegroundColor Yellow
+    & $script:ContainerRuntime logs --tail $Lines $Container 2>&1
+    Write-Host "--- End of logs ---`n" -ForegroundColor Yellow
+}
+
+function Wait-ContainerReady {
+    param(
+        [string]$Container,
+        [int]$TimeoutSeconds = 60,
+        [int]$CheckIntervalSeconds = 5
+    )
+
+    $elapsed = 0
+    while ($elapsed -lt $TimeoutSeconds) {
+        $health = Test-ContainerHealth -Container $Container
+        if ($health.Healthy) {
+            return $true
+        }
+
+        # If container is restarting or exited, fail fast
+        if ($health.Reason -match "not running|Restart loop") {
+            Write-Err "Container $Container failed: $($health.Reason)"
+            Show-ContainerLogs -Container $Container
+            return $false
+        }
+
+        Start-Sleep -Seconds $CheckIntervalSeconds
+        $elapsed += $CheckIntervalSeconds
+        Write-Host "  Waiting for $Container... ($elapsed/$TimeoutSeconds sec)" -ForegroundColor Gray
+    }
+
+    Write-Err "Container $Container failed to become healthy within $TimeoutSeconds seconds"
+    Show-ContainerLogs -Container $Container
+    return $false
+}
+
 # Banner
 function Show-Banner {
     Write-Host @"
@@ -391,24 +463,37 @@ function Install-OpenWebUI {
 
     try {
         $result = Invoke-Container $containerArgs 2>&1
-        if ($LASTEXITCODE -eq 0) {
-            Write-Success "Open WebUI installed successfully!"
-            Write-Host ""
-            Write-Host "  Access Open WebUI at: " -NoNewline
-            Write-Host "http://localhost:3000" -ForegroundColor Green
-            Write-Host "  Image: $desiredImage (no embedded Ollama)" -ForegroundColor Gray
-            Write-Host ""
-            Write-Host "  To enable web search:" -ForegroundColor Yellow
-            Write-Host "  1. Open http://localhost:3000"
-            Write-Host "  2. Create an account (first user becomes admin)"
-            Write-Host "  3. Go to Settings > Web Search"
-            Write-Host "  4. Enable and choose a provider (DuckDuckGo is free)"
-            Write-Host ""
-            return $true
-        } else {
+        if ($LASTEXITCODE -ne 0) {
             Write-Err "Failed to start Open WebUI: $result"
             return $false
         }
+
+        # Wait for container to become healthy
+        Write-Info "Waiting for Open WebUI to start..."
+        if (-not (Wait-ContainerReady -Container "open-webui" -TimeoutSeconds 60)) {
+            Write-Err "Open WebUI failed to start properly"
+            Write-Host ""
+            Write-Host "Troubleshooting tips:" -ForegroundColor Yellow
+            Write-Host "  1. Check if Ollama is running: ollama ps"
+            Write-Host "  2. Check container logs above for errors"
+            Write-Host "  3. Try: .\debug-ollama-connection.ps1 -Fix"
+            Write-Host ""
+            return $false
+        }
+
+        Write-Success "Open WebUI installed successfully!"
+        Write-Host ""
+        Write-Host "  Access Open WebUI at: " -NoNewline
+        Write-Host "http://localhost:3000" -ForegroundColor Green
+        Write-Host "  Image: $desiredImage (no embedded Ollama)" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "  To enable web search:" -ForegroundColor Yellow
+        Write-Host "  1. Open http://localhost:3000"
+        Write-Host "  2. Create an account (first user becomes admin)"
+        Write-Host "  3. Go to Settings > Web Search"
+        Write-Host "  4. Enable and choose a provider (DuckDuckGo is free)"
+        Write-Host ""
+        return $true
     } catch {
         Write-Err "Container error: $_"
         return $false
@@ -443,6 +528,11 @@ services:
     restart: unless-stopped
     networks:
       - perplexica-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   perplexica-backend:
     image: $backendImage
@@ -450,15 +540,23 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - ./perplexica/config.toml:/app/config.toml
-      - ./perplexica/data:/app/data
+      # Note: Perplexica image uses /home/perplexica/ for config
+      - ./perplexica/config.toml:/home/perplexica/config.toml
+      - ./perplexica/data:/home/perplexica/data
     depends_on:
-      - searxng
+      searxng:
+        condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
     networks:
       - perplexica-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   perplexica-frontend:
     image: $frontendImage
@@ -469,10 +567,17 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:3001
       - NEXT_PUBLIC_WS_URL=ws://localhost:3001
     depends_on:
-      - perplexica-backend
+      perplexica-backend:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - perplexica-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 networks:
   perplexica-network:
@@ -496,6 +601,10 @@ function New-PerplexicaConfig {
     New-Item -ItemType Directory -Path $searxngDir -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $perplexicaDir "data") -Force | Out-Null
 
+    # Get the correct Ollama URL for the detected container runtime
+    $ollamaUrl = Get-OllamaHostUrl
+    Write-Info "Configuring Perplexica to use Ollama at: $ollamaUrl"
+
     $configPath = Join-Path $perplexicaDir "config.toml"
     $configContent = @"
 [GENERAL]
@@ -509,7 +618,7 @@ ANTHROPIC = ""
 
 [API_ENDPOINTS]
 SEARXNG = "http://searxng:8080"
-OLLAMA = "http://host.docker.internal:11434"
+OLLAMA = "$ollamaUrl"
 "@
     $configContent | Out-File $configPath -Encoding utf8
     Write-Success "Created perplexica/config.toml"
@@ -562,10 +671,26 @@ function Install-Perplexica {
 
     $existing = Invoke-Container @("ps", "--filter", "name=perplexica", "--format", "{{.Names}}") 2>&1
     if ($existing) {
-        Write-Success "Perplexica is already running"
-        Write-Host "  Frontend: http://localhost:3002"
-        Write-Host "  SearXNG:  http://localhost:4000"
-        return $true
+        # Check health of existing containers
+        $allHealthy = $true
+        foreach ($container in @("searxng", "perplexica-backend", "perplexica-frontend")) {
+            $health = Test-ContainerHealth -Container $container
+            if (-not $health.Healthy) {
+                Write-Warn "$container issue: $($health.Reason)"
+                Show-ContainerLogs -Container $container -Lines 15
+                $allHealthy = $false
+            }
+        }
+        if ($allHealthy) {
+            Write-Success "Perplexica is already running and healthy"
+            Write-Host "  Frontend: http://localhost:3002"
+            Write-Host "  SearXNG:  http://localhost:4000"
+            return $true
+        } else {
+            Write-Warn "Some Perplexica containers have issues. Consider restarting with:"
+            Write-Host "  .\setup-ollama-websearch.ps1 -Uninstall; .\setup-ollama-websearch.ps1 -Setup Perplexica"
+            return $false
+        }
     }
 
     Write-Info "Creating configuration files..."
@@ -583,24 +708,54 @@ function Install-Perplexica {
             $result = & $script:ComposeCommand -f $composePath up -d 2>&1
         }
 
-        if ($LASTEXITCODE -eq 0) {
-            Write-Success "Perplexica installed successfully!"
-            Write-Host ""
-            Write-Host "  Access Perplexica at: " -NoNewline
-            Write-Host "http://localhost:3002" -ForegroundColor Green
-            Write-Host "  SearXNG (direct): " -NoNewline
-            Write-Host "http://localhost:4000" -ForegroundColor Green
-            Write-Host ""
-            Write-Host "  Configuration:" -ForegroundColor Yellow
-            Write-Host "  1. Open http://localhost:3002"
-            Write-Host "  2. Select your Ollama model (qwen3:32b recommended)"
-            Write-Host "  3. Start searching with AI-powered answers!"
-            Write-Host ""
-            return $true
-        } else {
+        if ($LASTEXITCODE -ne 0) {
             Write-Err "Failed to start Perplexica: $result"
             return $false
         }
+
+        # Wait for containers to become healthy
+        Write-Info "Waiting for containers to become healthy..."
+
+        $containers = @(
+            @{ Name = "searxng"; Timeout = 60 },
+            @{ Name = "perplexica-backend"; Timeout = 90 },
+            @{ Name = "perplexica-frontend"; Timeout = 60 }
+        )
+
+        $allStarted = $true
+        foreach ($c in $containers) {
+            Write-Info "Checking $($c.Name)..."
+            if (-not (Wait-ContainerReady -Container $c.Name -TimeoutSeconds $c.Timeout)) {
+                $allStarted = $false
+                # Don't return yet - check all containers to show all issues
+            }
+        }
+
+        if (-not $allStarted) {
+            Write-Err "Some Perplexica containers failed to start properly"
+            Write-Host ""
+            Write-Host "Troubleshooting tips:" -ForegroundColor Yellow
+            Write-Host "  1. Check if Ollama is running: ollama ps"
+            Write-Host "  2. Check container logs above for errors"
+            Write-Host "  3. If using Podman, verify gateway IP is correct"
+            Write-Host "  4. Try: .\debug-ollama-connection.ps1 -Container perplexica-backend"
+            Write-Host ""
+            return $false
+        }
+
+        Write-Success "Perplexica installed successfully!"
+        Write-Host ""
+        Write-Host "  Access Perplexica at: " -NoNewline
+        Write-Host "http://localhost:3002" -ForegroundColor Green
+        Write-Host "  SearXNG (direct): " -NoNewline
+        Write-Host "http://localhost:4000" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "  Configuration:" -ForegroundColor Yellow
+        Write-Host "  1. Open http://localhost:3002"
+        Write-Host "  2. Select your Ollama model (qwen3:32b recommended)"
+        Write-Host "  3. Start searching with AI-powered answers!"
+        Write-Host ""
+        return $true
     } catch {
         Write-Err "Compose error: $_"
         return $false

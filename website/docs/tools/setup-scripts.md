@@ -16,6 +16,7 @@ PowerShell scripts for automated setup and management.
 | `backup-ollama-models.ps1` | Backup/restore models to external storage |
 | `debug-ollama-connection.ps1` | Diagnose container connectivity issues |
 | `test-ollama-stack.ps1` | Test suite for verifying setup |
+| `cleanup-containers.ps1` | Stop and remove stack containers |
 | `sync-container-images.ps1` | Mirror container images to your registry |
 
 ## setup-ollama.ps1
@@ -175,11 +176,18 @@ Diagnoses and fixes container-to-Ollama connectivity issues.
 ### Diagnostic Phases
 
 1. **Host Check** - Is Ollama running on Windows?
-2. **Container Check** - Is container running? What's configured?
+2. **Container Check** - Is container running? Checks restart count, health status, shows logs on issues
 3. **Connectivity Test** - Can container reach Ollama?
-4. **Gateway Discovery** - Find correct IP for Podman
+4. **Gateway Discovery** - Auto-detect correct IP for Podman
 5. **Analysis** - Explain the problem
 6. **Fix** - Recreate container with correct settings
+
+### Features
+
+- **Restart loop detection** - Warns if container has restarted >3 times
+- **Health status check** - Reports container health (healthy/unhealthy)
+- **Auto-show logs** - Displays recent logs when issues detected
+- **Gateway auto-detect** - Finds Podman gateway IP automatically
 
 See [Podman Troubleshooting](/troubleshooting/podman-ollama) for details.
 
@@ -206,8 +214,15 @@ Comprehensive test suite for verifying your setup.
 |----------|-------|
 | Prerequisites | Container runtime, NVIDIA GPU |
 | Ollama | API, models, GPU acceleration |
-| Open WebUI | Container, image tag, UI access |
-| Perplexica | SearXNG, backend, frontend |
+| Open WebUI | Container health, restart loops, image tag, UI access |
+| Perplexica | SearXNG, backend, frontend (health status for each) |
+
+### Health Checks
+
+The test suite detects:
+- **Restart loops** - Fails if container has restarted >3 times
+- **Health status** - Reports healthy/unhealthy/starting
+- **Auto-show logs** - Displays recent logs on failures
 
 ### Example Output
 
@@ -223,16 +238,23 @@ Comprehensive test suite for verifying your setup.
 [Ollama]
   [PASS] API responding on :11434
   [PASS] 6 models available
-  [PASS] Model loaded (qwen3:32b)
-  [PASS] GPU acceleration active
+  [SKIP] No models currently loaded
+  [SKIP] Inference test (use -Full flag)
 
 [Open WebUI]
-  [PASS] Container running
+  [PASS] Container running (health: healthy)
   [PASS] Using CUDA image (no embedded Ollama)
   [PASS] UI accessible on :3000
 
+[Perplexica]
+  [PASS] SearXNG container running (health: healthy)
+  [PASS] SearXNG accessible on :4000
+  [PASS] Backend container running
+  [PASS] Frontend container running
+  [PASS] Frontend accessible on :3002
+
 ========================================
-  Results: 8 passed, 0 failed, 2 skipped
+  Results: 12 passed, 0 failed, 2 skipped
 ========================================
 ```
 
@@ -267,6 +289,42 @@ Mirrors container images to your own GitHub Container Registry.
 | perplexica-frontend:main | docker.io/itzcrazykns1337/perplexica-frontend:main |
 
 See [Container Sync](/tools/container-sync) for details.
+
+## cleanup-containers.ps1
+
+Stop and remove all Ollama stack containers.
+
+### Usage
+
+```powershell
+# Interactive - asks what to delete
+.\cleanup-containers.ps1
+
+# Remove containers only (keep data)
+.\cleanup-containers.ps1 -Force
+
+# Remove containers AND volumes (deletes all data)
+.\cleanup-containers.ps1 -DeleteVolumes
+
+# Remove everything, no prompts
+.\cleanup-containers.ps1 -DeleteVolumes -Force
+```
+
+### What It Removes
+
+| Container | Data Location |
+|-----------|---------------|
+| open-webui | `open-webui` volume |
+| perplexica-frontend | - |
+| perplexica-backend | `./perplexica/data` |
+| searxng | `./searxng` |
+
+### Options
+
+| Parameter | Description |
+|-----------|-------------|
+| `-Force` | Skip confirmation prompts |
+| `-DeleteVolumes` | Also remove volumes (persistent data) |
 
 ## Common Parameters
 

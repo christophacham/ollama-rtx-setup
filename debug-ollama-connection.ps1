@@ -37,6 +37,14 @@ function Write-Info { param($msg) Write-Host "  [INFO] " -NoNewline -ForegroundC
 function Write-Warn { param($msg) Write-Host "  [WARN] " -NoNewline -ForegroundColor Yellow; Write-Host $msg }
 function Write-Section { param($msg) Write-Host "`n[$msg]" -ForegroundColor Magenta }
 
+function Show-ContainerLogs {
+    param([string]$ContainerName, [int]$Lines = 15)
+    Write-Host ""
+    Write-Host "  --- Recent logs from $ContainerName ---" -ForegroundColor Yellow
+    podman logs --tail $Lines $ContainerName 2>&1 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+    Write-Host "  --- End of logs ---" -ForegroundColor Yellow
+}
+
 # State tracking
 $script:Issues = @()
 $script:GatewayIP = $null
@@ -86,6 +94,30 @@ function Test-Container {
         Write-Warn "Container '$Container' exists but not running"
         Write-Info "Starting container..."
         podman start $Container 2>&1 | Out-Null
+    }
+
+    # Check restart count (detect restart loops)
+    $restarts = podman inspect $Container --format "{{.RestartCount}}" 2>&1
+    if ($restarts -and [int]$restarts -gt 3) {
+        Write-Fail "Container has restarted $restarts times - possible restart loop"
+        $script:Issues += "Restart loop detected"
+        Show-ContainerLogs -ContainerName $Container
+    } elseif ($restarts -and [int]$restarts -gt 0) {
+        Write-Warn "Container has restarted $restarts time(s)"
+    }
+
+    # Check health status if available
+    $health = podman inspect $Container --format "{{.State.Health.Status}}" 2>&1
+    if ($health -and $health -ne "<no value>" -and $health -ne "") {
+        if ($health -eq "unhealthy") {
+            Write-Fail "Container health check: $health"
+            $script:Issues += "Container unhealthy"
+            Show-ContainerLogs -ContainerName $Container
+        } elseif ($health -eq "healthy") {
+            Write-Pass "Container health check: $health"
+        } else {
+            Write-Info "Container health check: $health"
+        }
     }
 
     # Get current OLLAMA_BASE_URL

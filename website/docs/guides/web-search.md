@@ -107,7 +107,11 @@ A Perplexity AI alternative that's 100% self-hosted and private.
 
 ### Configuration
 
-Edit `perplexica/config.toml`:
+The setup script auto-generates `perplexica/config.toml` with the correct Ollama URL:
+- **Docker**: Uses `host.docker.internal:11434`
+- **Podman**: Auto-detects gateway IP (e.g., `172.x.x.1:11434`)
+
+To manually configure, edit `perplexica/config.toml`:
 
 ```toml
 [GENERAL]
@@ -116,8 +120,12 @@ SIMILARITY_MEASURE = "cosine"
 
 [API_ENDPOINTS]
 SEARXNG = "http://searxng:8080"
-OLLAMA = "http://host.docker.internal:11434"
+OLLAMA = "http://172.17.144.1:11434"  # Podman gateway IP (auto-detected)
 ```
+
+:::tip Container Config Path
+Inside the container, the config is at `/home/perplexica/config.toml` (not `/app/`).
+:::
 
 ### SearXNG Customization
 
