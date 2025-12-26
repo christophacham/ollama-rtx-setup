@@ -21,12 +21,35 @@ param(
     [switch]$SkipModels,
     [switch]$SkipContainers,
     [switch]$Uninstall,
+    [switch]$UseLocalRegistry,
     [switch]$Help
 )
 
 # Script-level container runtime (docker or podman)
 $script:ContainerRuntime = $null
 $script:ComposeCommand = $null
+$script:ImageRegistry = $null
+
+# Get image reference (supports local registry mirroring)
+function Get-ImageRef {
+    param(
+        [string]$Name,
+        [string]$Tag
+    )
+
+    if ($script:ImageRegistry) {
+        return "$($script:ImageRegistry)/${Name}:${Tag}"
+    }
+
+    # Return upstream defaults
+    switch ($Name) {
+        "open-webui" { return "ghcr.io/open-webui/open-webui:$Tag" }
+        "searxng" { return "docker.io/searxng/searxng:$Tag" }
+        "perplexica-backend" { return "docker.io/itzcrazykns1337/perplexica-backend:$Tag" }
+        "perplexica-frontend" { return "docker.io/itzcrazykns1337/perplexica-frontend:$Tag" }
+        default { return "${Name}:${Tag}" }
+    }
+}
 
 # Colors for output
 function Write-Success { param($msg) Write-Host "[OK] $msg" -ForegroundColor Green }
@@ -64,6 +87,7 @@ Options:
     -SkipModels      Skip downloading web search optimized models
     -SkipContainers  Skip container setup (config only)
     -Uninstall       Remove web search containers
+    -UseLocalRegistry Use mirrored images from ghcr.io/christophacham
     -Help            Show this help message
 
 Examples:
@@ -283,7 +307,7 @@ function Install-OpenWebUI {
 
     # Determine desired image tag
     $desiredTag = if ($hasGPU) { "cuda" } else { "main" }
-    $desiredImage = "ghcr.io/open-webui/open-webui:$desiredTag"
+    $desiredImage = Get-ImageRef -Name "open-webui" -Tag $desiredTag
 
     # Check if container already exists
     $existing = Invoke-Container @("ps", "-a", "--filter", "name=open-webui", "--format", "{{.Names}}") 2>&1
@@ -398,12 +422,17 @@ function New-PerplexicaCompose {
 
     $composePath = Join-Path $scriptDir "docker-compose-perplexica.yml"
 
+    # Get image references (supports local registry)
+    $searxngImage = Get-ImageRef -Name "searxng" -Tag "latest"
+    $backendImage = Get-ImageRef -Name "perplexica-backend" -Tag "main"
+    $frontendImage = Get-ImageRef -Name "perplexica-frontend" -Tag "main"
+
     $composeContent = @"
 version: '3.8'
 
 services:
   searxng:
-    image: searxng/searxng:latest
+    image: $searxngImage
     container_name: searxng
     ports:
       - "4000:8080"
@@ -416,7 +445,7 @@ services:
       - perplexica-network
 
   perplexica-backend:
-    image: itzcrazykns1337/perplexica-backend:main
+    image: $backendImage
     container_name: perplexica-backend
     ports:
       - "3001:3001"
@@ -432,7 +461,7 @@ services:
       - perplexica-network
 
   perplexica-frontend:
-    image: itzcrazykns1337/perplexica-frontend:main
+    image: $frontendImage
     container_name: perplexica-frontend
     ports:
       - "3002:3000"
@@ -667,6 +696,12 @@ function Main {
     if ($Help) {
         Show-Help
         return
+    }
+
+    # Set image registry if using local mirror
+    if ($UseLocalRegistry) {
+        $script:ImageRegistry = "ghcr.io/christophacham/ollama-rtx-setup"
+        Write-Info "Using local registry: $($script:ImageRegistry)"
     }
 
     # Detect container runtime first
