@@ -96,15 +96,21 @@ End-to-end test suite for the complete stack.
 |------|---------------|
 | **Ollama** | Installation, service, API |
 | **Models** | At least one model available |
-| **Containers** | Runtime, running containers |
+| **Containers** | Running state, health status, restart loops |
 | **Network** | Port bindings, connectivity |
 | **GPU** | CUDA availability, VRAM |
+
+#### Health Detection
+
+The test suite automatically detects:
+- **Restart loops** - Fails if container restarted >3 times
+- **Health status** - Reports healthy/unhealthy/starting
+- **Shows logs** - Displays recent logs on container failures
 
 #### Full Test Mode
 
 The `-Full` flag adds:
 - Model inference test (generates tokens)
-- Container health checks
 - Cross-container network tests
 - GPU utilization verification
 

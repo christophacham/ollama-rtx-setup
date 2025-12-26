@@ -513,8 +513,6 @@ function New-PerplexicaCompose {
     $frontendImage = Get-ImageRef -Name "perplexica-frontend" -Tag "main"
 
     $composeContent = @"
-version: '3.8'
-
 services:
   searxng:
     image: $searxngImage
@@ -552,7 +550,8 @@ services:
     networks:
       - perplexica-network
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001"]
+      # Using node TCP check since wget/curl not installed in this image
+      test: ["CMD", "node", "-e", "require('net').connect(3001,'localhost',()=>process.exit(0)).on('error',()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -573,7 +572,8 @@ services:
     networks:
       - perplexica-network
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000"]
+      # Using node TCP check since wget/curl not installed in this image
+      test: ["CMD", "node", "-e", "require('net').connect(3000,'localhost',()=>process.exit(0)).on('error',()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -584,7 +584,8 @@ networks:
     driver: bridge
 "@
 
-    $composeContent | Out-File $composePath -Encoding utf8
+    # Use WriteAllText to avoid BOM
+    [System.IO.File]::WriteAllText($composePath, $composeContent)
     Write-Success "Created docker-compose-perplexica.yml"
     return $composePath
 }
@@ -620,15 +621,17 @@ ANTHROPIC = ""
 SEARXNG = "http://searxng:8080"
 OLLAMA = "$ollamaUrl"
 "@
-    $configContent | Out-File $configPath -Encoding utf8
+    # Use WriteAllText to avoid BOM (TOML parser can't handle BOM)
+    [System.IO.File]::WriteAllText($configPath, $configContent)
     Write-Success "Created perplexica/config.toml"
 
     $searxngSettingsPath = Join-Path $searxngDir "settings.yml"
+    $secretKey = [guid]::NewGuid().ToString()
     $searxngSettings = @"
 use_default_settings: true
 
 server:
-  secret_key: "$(New-Guid)"
+  secret_key: "$secretKey"
   bind_address: "0.0.0.0"
 
 search:
@@ -659,7 +662,8 @@ engines:
     engine: stackoverflow
     disabled: false
 "@
-    $searxngSettings | Out-File $searxngSettingsPath -Encoding utf8
+    # Use WriteAllText to avoid BOM
+    [System.IO.File]::WriteAllText($searxngSettingsPath, $searxngSettings)
     Write-Success "Created searxng/settings.yml"
 
     return $true
