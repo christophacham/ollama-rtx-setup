@@ -98,7 +98,13 @@ function Test-RegistryAuth {
     Write-Host "  [OK] Container engine: $($script:ContainerEngine)" -ForegroundColor Green
 
     if ($Sync -or $Force) {
-        # For sync, we need write access - verify by checking login status
+        # In CI (GitHub Actions), login happens before script runs via workflow step
+        if ($env:CI -eq "true" -or $env:GITHUB_ACTIONS -eq "true") {
+            Write-Host "  [OK] Running in GitHub Actions (auth via workflow)" -ForegroundColor Green
+            return $true
+        }
+
+        # For local runs, verify login status
         $loginCheck = & $script:ContainerEngine login ghcr.io --get-login 2>&1
         if ($LASTEXITCODE -ne 0) {
             Write-Error "Not logged in to ghcr.io"
