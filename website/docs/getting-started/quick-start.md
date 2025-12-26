@@ -54,9 +54,9 @@ curl http://localhost:11434/api/chat -d '{
 
 ## Next Steps
 
-- [Add Web Search](/docs/guides/web-search) - Enable AI-powered internet search
-- [Choose Models](/docs/guides/model-selection) - Find the best model for your task
-- [Manage Models](/docs/tools/ollama-manager) - Use the TUI for easy model management
+- [Add Web Search](/guides/web-search) - Enable AI-powered internet search
+- [Choose Models](/guides/model-selection) - Find the best model for your task
+- [Manage Models](/tools/ollama-manager) - Use the TUI for easy model management
 
 ## Troubleshooting
 

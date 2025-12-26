@@ -78,4 +78,4 @@ cd ollama-rtx-setup
 ollama run qwen3:32b
 ```
 
-Ready to dive deeper? Start with the [Quick Start Guide](/docs/getting-started/quick-start).
+Ready to dive deeper? Start with the [Quick Start Guide](/getting-started/quick-start).

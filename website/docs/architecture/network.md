@@ -245,4 +245,4 @@ podman exec open-webui ip route
 | `Timeout` | Firewall | Add firewall rule |
 | `Connection reset` | Ollama not running | Start Ollama |
 
-See [Troubleshooting Podman](/docs/troubleshooting/podman-ollama) for detailed diagnostics.
+See [Troubleshooting Podman](/troubleshooting/podman-ollama) for detailed diagnostics.

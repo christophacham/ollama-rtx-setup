@@ -181,5 +181,5 @@ Docker's `host-gateway` magic makes `host.docker.internal` work correctly.
 
 ## Related
 
-- [Network Architecture](/docs/architecture/network) - Deep dive on container networking
-- [Debug Script](/docs/tools/setup-scripts#debug-ollama-connectionps1) - Script details
+- [Network Architecture](/architecture/network) - Deep dive on container networking
+- [Debug Script](/tools/setup-scripts#debug-ollama-connectionps1) - Script details

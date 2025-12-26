@@ -155,7 +155,7 @@ podman info
    ```powershell
    curl http://localhost:11434/api/tags
    ```
-2. For Podman, see [Podman Connectivity](/docs/troubleshooting/podman-ollama)
+2. For Podman, see [Podman Connectivity](/troubleshooting/podman-ollama)
 3. Verify environment variable:
    ```powershell
    podman inspect open-webui --format '{{range .Config.Env}}{{println .}}{{end}}'

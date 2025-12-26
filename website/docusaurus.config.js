@@ -29,6 +29,7 @@ const config = {
         docs: {
           sidebarPath: './sidebars.js',
           editUrl: 'https://github.com/christophacham/ollama-rtx-setup/tree/master/website/',
+          routeBasePath: '/', // Make docs the landing page
         },
         blog: false,
         theme: {
@@ -70,15 +71,15 @@ const config = {
             items: [
               {
                 label: 'Getting Started',
-                to: '/docs/getting-started/quick-start',
+                to: '/getting-started/quick-start',
               },
               {
                 label: 'Model Selection Guide',
-                to: '/docs/guides/model-selection',
+                to: '/guides/model-selection',
               },
               {
                 label: 'Architecture',
-                to: '/docs/architecture/overview',
+                to: '/architecture/overview',
               },
             ],
           },
@@ -87,11 +88,11 @@ const config = {
             items: [
               {
                 label: 'Ollama Manager',
-                to: '/docs/tools/ollama-manager',
+                to: '/tools/ollama-manager',
               },
               {
                 label: 'Setup Scripts',
-                to: '/docs/tools/setup-scripts',
+                to: '/tools/setup-scripts',
               },
             ],
           },

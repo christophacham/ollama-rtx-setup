@@ -246,7 +246,7 @@ $env:OLLAMA_HOST = "0.0.0.0"
 
 ## Troubleshooting
 
-See the [full troubleshooting guide](https://christophacham.github.io/ollama-rtx-setup/docs/troubleshooting/common-issues) for detailed solutions.
+See the [full troubleshooting guide](https://christophacham.github.io/ollama-rtx-setup/troubleshooting/common-issues) for detailed solutions.
 
 ### Ollama Not Running
 
@@ -269,7 +269,7 @@ If using Podman and containers can't reach Ollama, run the debug script:
 .\debug-ollama-connection.ps1 -Fix
 ```
 
-See [Podman + Ollama Connectivity](https://christophacham.github.io/ollama-rtx-setup/docs/troubleshooting/podman-ollama) for details.
+See [Podman + Ollama Connectivity](https://christophacham.github.io/ollama-rtx-setup/troubleshooting/podman-ollama) for details.
 
 ### VRAM Out of Memory
 

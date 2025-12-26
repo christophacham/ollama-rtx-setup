@@ -168,7 +168,7 @@ Windows Host:
 
 ### Container Networking
 
-See [Network Architecture](/docs/architecture/network) for details on Podman/Docker networking.
+See [Network Architecture](/architecture/network) for details on Podman/Docker networking.
 
 ## Security Model
 

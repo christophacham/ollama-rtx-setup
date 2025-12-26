@@ -153,7 +153,7 @@ Backup and restore models to/from external storage.
 - **Space check** - Verifies disk space before backup
 - **Incremental** - Only copies changed files
 
-See [Backup & Restore Guide](/docs/guides/backup-restore) for details.
+See [Backup & Restore Guide](/guides/backup-restore) for details.
 
 ## debug-ollama-connection.ps1
 
@@ -181,7 +181,7 @@ Diagnoses and fixes container-to-Ollama connectivity issues.
 5. **Analysis** - Explain the problem
 6. **Fix** - Recreate container with correct settings
 
-See [Podman Troubleshooting](/docs/troubleshooting/podman-ollama) for details.
+See [Podman Troubleshooting](/troubleshooting/podman-ollama) for details.
 
 ## test-ollama-stack.ps1
 
@@ -266,7 +266,7 @@ Mirrors container images to your own GitHub Container Registry.
 | perplexica-backend:main | docker.io/itzcrazykns1337/perplexica-backend:main |
 | perplexica-frontend:main | docker.io/itzcrazykns1337/perplexica-frontend:main |
 
-See [Container Sync](/docs/tools/container-sync) for details.
+See [Container Sync](/tools/container-sync) for details.
 
 ## Common Parameters
 

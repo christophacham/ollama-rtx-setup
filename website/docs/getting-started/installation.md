@@ -94,7 +94,7 @@ podman info
 ```
 
 :::caution Podman Networking
-Podman on WSL2 has networking quirks. See [Podman Networking](/docs/architecture/network) for details.
+Podman on WSL2 has networking quirks. See [Podman Networking](/architecture/network) for details.
 :::
 
 ## Installing Web Search Components

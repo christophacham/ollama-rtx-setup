@@ -214,7 +214,7 @@ Some search providers have rate limits. For heavy usage:
 
 ### "Container can't reach Ollama"
 
-This is a common Podman/WSL2 issue. See [Podman Networking](/docs/troubleshooting/podman-ollama).
+This is a common Podman/WSL2 issue. See [Podman Networking](/troubleshooting/podman-ollama).
 
 ### "SearXNG returns empty results"
 
