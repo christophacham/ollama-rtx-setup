@@ -1,0 +1,98 @@
+/**
+ * Ollama RTX Setup - Dark-first theme
+ * Terminal/dev aesthetic with green accent
+ */
+
+:root {
+  --ifm-color-primary: #10b981;
+  --ifm-color-primary-dark: #0d9668;
+  --ifm-color-primary-darker: #0c8a5f;
+  --ifm-color-primary-darkest: #0a724f;
+  --ifm-color-primary-light: #34d399;
+  --ifm-color-primary-lighter: #6ee7b7;
+  --ifm-color-primary-lightest: #a7f3d0;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(16, 185, 129, 0.1);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #34d399;
+  --ifm-color-primary-dark: #10b981;
+  --ifm-color-primary-darker: #0d9668;
+  --ifm-color-primary-darkest: #0a724f;
+  --ifm-color-primary-light: #6ee7b7;
+  --ifm-color-primary-lighter: #a7f3d0;
+  --ifm-color-primary-lightest: #d1fae5;
+  --ifm-background-color: #0d1117;
+  --ifm-background-surface-color: #161b22;
+  --ifm-navbar-background-color: #161b22;
+  --ifm-footer-background-color: #0d1117;
+  --docusaurus-highlighted-code-line-bg: rgba(52, 211, 153, 0.15);
+}
+
+/* Terminal-style code blocks */
+[data-theme='dark'] .prism-code {
+  background-color: #0d1117 !important;
+  border: 1px solid #30363d;
+}
+
+/* Better table styling */
+[data-theme='dark'] table {
+  border-collapse: collapse;
+}
+
+[data-theme='dark'] th,
+[data-theme='dark'] td {
+  border: 1px solid #30363d;
+}
+
+[data-theme='dark'] th {
+  background-color: #161b22;
+}
+
+/* Navbar styling */
+.navbar {
+  border-bottom: 1px solid #30363d;
+}
+
+/* Hero section styling */
+.hero {
+  background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+}
+
+.hero__title {
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+.hero__subtitle {
+  color: #8b949e;
+}
+
+/* Sidebar styling */
+[data-theme='dark'] .menu__link {
+  color: #c9d1d9;
+}
+
+[data-theme='dark'] .menu__link--active {
+  color: #34d399;
+}
+
+/* Admonition styling */
+[data-theme='dark'] .alert--info {
+  --ifm-alert-background-color: rgba(52, 211, 153, 0.1);
+  --ifm-alert-border-color: #34d399;
+}
+
+/* Card styling for feature sections */
+.feature-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.feature-card:hover {
+  border-color: #34d399;
+}

@@ -4,6 +4,8 @@ Complete setup for running powerful local AI models with Ollama on NVIDIA RTX 50
 
 > **Last Updated:** December 2025 - Includes DeepSeek-R1-0528, Qwen3, Phi-4, Gemma 3, and Llama 3.3
 
+**[Full Documentation](https://christophacham.github.io/ollama-rtx-setup)** | [Quick Start](#quick-start) | [Model Guide](#recommended-models-2025) | [Troubleshooting](#troubleshooting)
+
 ## Features
 
 - **Zero API costs** - Run unlimited queries locally
@@ -244,6 +246,8 @@ $env:OLLAMA_HOST = "0.0.0.0"
 
 ## Troubleshooting
 
+See the [full troubleshooting guide](https://christophacham.github.io/ollama-rtx-setup/docs/troubleshooting/common-issues) for detailed solutions.
+
 ### Ollama Not Running
 
 ```powershell
@@ -256,6 +260,16 @@ ollama serve
 $env:OLLAMA_HOST = "0.0.0.0"
 # Restart Ollama
 ```
+
+### Podman + Ollama Connectivity
+
+If using Podman and containers can't reach Ollama, run the debug script:
+
+```powershell
+.\debug-ollama-connection.ps1 -Fix
+```
+
+See [Podman + Ollama Connectivity](https://christophacham.github.io/ollama-rtx-setup/docs/troubleshooting/podman-ollama) for details.
 
 ### VRAM Out of Memory
 
