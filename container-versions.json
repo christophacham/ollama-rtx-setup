@@ -1,34 +1,34 @@
 {
   "registry": "ghcr.io/christophacham/ollama-rtx-setup",
-  "last_check": "2025-12-26T13:46:15.5083074+00:00",
+  "last_check": "2025-12-26T13:54:37.1264924+00:00",
   "images": {
     "open-webui:cuda": {
       "upstream": "ghcr.io/open-webui/open-webui:cuda",
-      "upstream_digest": null,
-      "local_digest": null,
-      "synced_at": null,
-      "status": "pending"
+      "upstream_digest": "sha256:623dc171b7e2867d8f21d0d27c2698ad6379bd8b277e3b174765b7f301d74a3b",
+      "local_digest": "sha256:623dc171b7e2867d8f21d0d27c2698ad6379bd8b277e3b174765b7f301d74a3b",
+      "synced_at": "2025-12-26T13:54:42.0196386+00:00",
+      "status": "synced"
     },
     "open-webui:main": {
       "upstream": "ghcr.io/open-webui/open-webui:main",
-      "upstream_digest": null,
-      "local_digest": null,
-      "synced_at": null,
-      "status": "pending"
+      "upstream_digest": "sha256:18c1475e636245e2f439b59b4a2b38e1965c881856092d21e5efc38da7e1dac3",
+      "local_digest": "sha256:18c1475e636245e2f439b59b4a2b38e1965c881856092d21e5efc38da7e1dac3",
+      "synced_at": "2025-12-26T13:54:45.5864635+00:00",
+      "status": "synced"
     },
     "searxng:latest": {
       "upstream": "docker.io/searxng/searxng:latest",
-      "upstream_digest": null,
-      "local_digest": null,
-      "synced_at": null,
-      "status": "pending"
+      "upstream_digest": "sha256:3c041584da716339860e903ec923b294e6b3d9fbb25cf2d9cc05dc23957c865a",
+      "local_digest": "sha256:3c041584da716339860e903ec923b294e6b3d9fbb25cf2d9cc05dc23957c865a",
+      "synced_at": "2025-12-26T13:54:55.7538333+00:00",
+      "status": "synced"
     },
     "perplexica-backend:main": {
       "upstream": "docker.io/itzcrazykns1337/perplexica-backend:main",
-      "upstream_digest": null,
-      "local_digest": null,
-      "synced_at": null,
-      "status": "pending"
+      "upstream_digest": "sha256:3f93472a9c4a34147098c4b025c4ca311b6b1c507149239b9b4f12db91315236",
+      "local_digest": "sha256:3f93472a9c4a34147098c4b025c4ca311b6b1c507149239b9b4f12db91315236",
+      "synced_at": "2025-12-26T13:56:04.1695602+00:00",
+      "status": "synced"
     },
     "perplexica-frontend:main": {
       "upstream": "docker.io/itzcrazykns1337/perplexica-frontend:main",
