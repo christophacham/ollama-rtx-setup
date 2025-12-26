@@ -105,6 +105,40 @@ A Perplexity AI alternative that's 100% self-hosted and private.
 - **Focus modes** - Academic, writing, Wolfram Alpha, YouTube, Reddit
 - **Meta-search** - SearXNG aggregates multiple search engines
 
+### First-Time Setup
+
+1. Open http://localhost:3002
+2. Click the settings icon (gear) in the sidebar
+3. Under **Chat Model**, select **Ollama** and choose a model (e.g., `llama3.1:8b`)
+4. Under **Embedding Model**, select **Local** and choose `BGE Small`
+5. Click **Save** and start searching
+
+### Using Perplexica
+
+Type your question and press Enter. Perplexica will:
+1. Search the web via SearXNG
+2. Read and analyze relevant sources
+3. Synthesize an answer with citations
+
+#### Focus Modes
+
+Select a focus mode before searching for optimized results:
+
+| Mode | Best For |
+|------|----------|
+| **All** | General web searches |
+| **Academic** | Research papers and scholarly articles |
+| **YouTube** | Finding video content |
+| **Reddit** | Community discussions and opinions |
+| **Wolfram Alpha** | Math, calculations, data queries |
+| **Writing** | Writing help (no web search) |
+
+#### Tips
+
+- Be specific: "React 19 new features 2024" works better than "tell me about React"
+- Use Academic mode for technical documentation
+- Larger models (32B) give better synthesis but are slower
+
 ### Configuration
 
 The setup script auto-generates `perplexica/config.toml` with the correct Ollama URL:
@@ -117,10 +151,16 @@ To manually configure, edit `perplexica/config.toml`:
 [GENERAL]
 PORT = 3001
 SIMILARITY_MEASURE = "cosine"
+KEEP_ALIVE = "5m"
+
+[MODELS.OLLAMA]
+API_URL = "http://172.17.144.1:11434"
+
+[MODELS.OPENAI]
+API_KEY = ""
 
 [API_ENDPOINTS]
 SEARXNG = "http://searxng:8080"
-OLLAMA = "http://172.17.144.1:11434"  # Podman gateway IP (auto-detected)
 ```
 
 :::tip Container Config Path
