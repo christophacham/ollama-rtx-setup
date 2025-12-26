@@ -611,15 +611,30 @@ function New-PerplexicaConfig {
 [GENERAL]
 PORT = 3001
 SIMILARITY_MEASURE = "cosine"
+KEEP_ALIVE = "5m"
 
-[API_KEYS]
-OPENAI = ""
-GROQ = ""
-ANTHROPIC = ""
+[MODELS.OPENAI]
+API_KEY = ""
+
+[MODELS.GROQ]
+API_KEY = ""
+
+[MODELS.ANTHROPIC]
+API_KEY = ""
+
+[MODELS.GEMINI]
+API_KEY = ""
+
+[MODELS.OLLAMA]
+API_URL = "$ollamaUrl"
+
+[MODELS.CUSTOM_OPENAI]
+API_URL = ""
+API_KEY = ""
+MODEL_NAME = ""
 
 [API_ENDPOINTS]
 SEARXNG = "http://searxng:8080"
-OLLAMA = "$ollamaUrl"
 "@
     # Use WriteAllText to avoid BOM (TOML parser can't handle BOM)
     [System.IO.File]::WriteAllText($configPath, $configContent)
