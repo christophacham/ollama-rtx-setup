@@ -120,33 +120,31 @@ function Test-RegistryAuth {
 function Get-ImageDigest {
     param([string]$ImageRef)
 
-    # Get digest via manifest inspect
-    $output = & $script:ContainerEngine manifest inspect $ImageRef 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        return $null
+    # Method 1: Try docker/podman pull + inspect (most reliable)
+    # Pull quietly to get the image, then inspect for digest
+    $pullOutput = & $script:ContainerEngine pull $ImageRef 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        # Get digest from inspect
+        $digestOutput = & $script:ContainerEngine inspect $ImageRef --format "{{index .RepoDigests 0}}" 2>&1
+        if ($LASTEXITCODE -eq 0 -and $digestOutput -match '@(sha256:[a-f0-9]+)') {
+            return $Matches[1]
+        }
+        # Fallback: get image ID as pseudo-digest
+        $idOutput = & $script:ContainerEngine inspect $ImageRef --format "{{.Id}}" 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            return $idOutput.Trim()
+        }
     }
 
-    # Parse JSON to get digest
-    try {
-        $manifest = $output | ConvertFrom-Json
-        if ($manifest.digest) {
-            return $manifest.digest
-        }
-        # For manifest lists, get the overall digest from Docker-Content-Digest header
-        # This is embedded in some outputs
-        if ($manifest.schemaVersion) {
-            # Compute digest from the raw manifest
-            $rawOutput = & $script:ContainerEngine manifest inspect --raw $ImageRef 2>&1
-            if ($LASTEXITCODE -eq 0) {
-                # Return a hash of the manifest for comparison
-                $hash = [System.Security.Cryptography.SHA256]::Create()
-                $bytes = [System.Text.Encoding]::UTF8.GetBytes($rawOutput)
-                $hashBytes = $hash.ComputeHash($bytes)
-                return "sha256:" + [BitConverter]::ToString($hashBytes).Replace("-", "").ToLower()
+    # Method 2: Try manifest inspect (works for some registries)
+    $output = & $script:ContainerEngine manifest inspect $ImageRef 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        try {
+            $manifest = $output | ConvertFrom-Json
+            if ($manifest.digest) {
+                return $manifest.digest
             }
-        }
-    } catch {
-        # Fallback: use the raw manifest hash
+        } catch {}
     }
 
     return $null
