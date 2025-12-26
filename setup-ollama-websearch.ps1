@@ -249,64 +249,92 @@ function Install-WebSearchModels {
 function Install-OpenWebUI {
     Write-Step "5" "Installing Open WebUI"
 
-    # Check if already running
-    $existing = Invoke-Container @("ps", "-a", "--filter", "name=open-webui", "--format", "{{.Names}}") 2>&1
-    if ($existing -eq "open-webui") {
-        Write-Info "Open WebUI container already exists"
-
-        $running = Invoke-Container @("ps", "--filter", "name=open-webui", "--format", "{{.Names}}") 2>&1
-        if ($running -eq "open-webui") {
-            Write-Success "Open WebUI is already running at http://localhost:3000"
-            return $true
-        } else {
-            Write-Info "Starting existing container..."
-            Invoke-Container @("start", "open-webui")
-            Write-Success "Open WebUI started at http://localhost:3000"
-            return $true
-        }
-    }
-
-    Write-Info "Pulling Open WebUI image (this may take a few minutes)..."
-
-    # Check for NVIDIA GPU
+    # Check for NVIDIA GPU first (needed for tag selection)
     $hasGPU = $false
     try {
         $nvidiaSmi = nvidia-smi 2>&1
         if ($LASTEXITCODE -eq 0) {
             $hasGPU = $true
-            Write-Info "NVIDIA GPU detected - enabling GPU support"
         }
     } catch {}
 
-    # Build container run command
-    $containerArgs = @(
-        "run", "-d",
-        "-p", "3000:8080",
-        "-v", "ollama:/root/.ollama",
-        "-v", "open-webui:/app/backend/data",
-        "--name", "open-webui",
-        "--restart", "always"
-    )
+    # Determine desired image tag
+    $desiredTag = if ($hasGPU) { "cuda" } else { "main" }
+    $desiredImage = "ghcr.io/open-webui/open-webui:$desiredTag"
 
-    # Add GPU support if available
-    if ($hasGPU) {
-        if ($script:ContainerRuntime -eq "docker") {
-            $containerArgs += @("--gpus=all")
+    # Check if container already exists
+    $existing = Invoke-Container @("ps", "-a", "--filter", "name=open-webui", "--format", "{{.Names}}") 2>&1
+    if ($existing -eq "open-webui") {
+        # Get current image tag
+        $currentImage = Invoke-Container @("inspect", "--format", "{{.Config.Image}}", "open-webui") 2>&1
+        Write-Info "Existing container uses: $currentImage"
+        Write-Info "Desired image: $desiredImage"
+
+        if ($currentImage -ne $desiredImage) {
+            Write-Warn "Container image mismatch detected!"
+            Write-Host ""
+            Write-Host "  Current: $currentImage" -ForegroundColor Yellow
+            Write-Host "  Desired: $desiredImage" -ForegroundColor Green
+            Write-Host ""
+            $response = Read-Host "Remove existing container and install new image? (y/N)"
+            if ($response -eq "y" -or $response -eq "Y") {
+                Write-Info "Removing existing container..."
+                Invoke-Container @("stop", "open-webui") 2>&1 | Out-Null
+                Invoke-Container @("rm", "open-webui") 2>&1 | Out-Null
+                Write-Success "Old container removed"
+            } else {
+                Write-Info "Keeping existing container"
+                $running = Invoke-Container @("ps", "--filter", "name=open-webui", "--format", "{{.Names}}") 2>&1
+                if ($running -ne "open-webui") {
+                    Invoke-Container @("start", "open-webui")
+                }
+                Write-Success "Open WebUI running at http://localhost:3000"
+                return $true
+            }
         } else {
-            # Podman GPU support
-            $containerArgs += @("--device", "nvidia.com/gpu=all")
+            Write-Info "Container already using correct image"
+            $running = Invoke-Container @("ps", "--filter", "name=open-webui", "--format", "{{.Names}}") 2>&1
+            if ($running -eq "open-webui") {
+                Write-Success "Open WebUI is already running at http://localhost:3000"
+                return $true
+            } else {
+                Write-Info "Starting existing container..."
+                Invoke-Container @("start", "open-webui")
+                Write-Success "Open WebUI started at http://localhost:3000"
+                return $true
+            }
         }
     }
 
-    # Add host gateway
-    if ($script:ContainerRuntime -eq "docker") {
-        $containerArgs += @("--add-host=host.docker.internal:host-gateway")
+    # Log GPU status
+    if ($hasGPU) {
+        Write-Info "NVIDIA GPU detected - using CUDA image"
     } else {
-        # Podman uses different syntax
-        $containerArgs += @("--add-host=host.docker.internal:host-gateway")
+        Write-Info "No GPU detected - using CPU image"
+    }
+    Write-Info "Using image: $desiredImage"
+    Write-Info "Pulling Open WebUI image (this may take a few minutes)..."
+
+    # Build container run command
+    # :cuda tag = CUDA support + connects to external Ollama (no embedded Ollama)
+    # :main tag = CPU only + connects to external Ollama
+    $containerArgs = @(
+        "run", "-d",
+        "-p", "3000:8080",
+        "-v", "open-webui:/app/backend/data",
+        "-e", "OLLAMA_BASE_URL=http://host.docker.internal:11434",
+        "--name", "open-webui",
+        "--restart", "always",
+        "--add-host=host.docker.internal:host-gateway"
+    )
+
+    # Add GPU support for CUDA image (Docker only - Podman WSL2 has issues)
+    if ($hasGPU -and $script:ContainerRuntime -eq "docker") {
+        Write-Info "Enabling GPU passthrough for Docker"
+        $containerArgs += @("--gpus=all")
     }
 
-    $containerArgs += @("ghcr.io/open-webui/open-webui:ollama")
+    $containerArgs += @($desiredImage)
 
     try {
         $result = Invoke-Container $containerArgs 2>&1
@@ -315,6 +343,7 @@ function Install-OpenWebUI {
             Write-Host ""
             Write-Host "  Access Open WebUI at: " -NoNewline
             Write-Host "http://localhost:3000" -ForegroundColor Green
+            Write-Host "  Image: $desiredImage (no embedded Ollama)" -ForegroundColor Gray
             Write-Host ""
             Write-Host "  To enable web search:" -ForegroundColor Yellow
             Write-Host "  1. Open http://localhost:3000"
