@@ -438,9 +438,32 @@ function Install-OpenWebUI {
     $ollamaUrl = Get-OllamaHostUrl
     Write-Info "Ollama URL: $ollamaUrl"
 
-    # Derive SearXNG URL from Ollama URL (same host, port 4000)
-    $searxngUrl = $ollamaUrl -replace ':11434', ':4000'
-    Write-Info "SearXNG URL: $searxngUrl"
+    # Detect if SearXNG is available (from Perplexica stack)
+    $useSearxng = $false
+    $searxngContainer = Invoke-Container @("ps", "--filter", "name=searxng", "--format", "{{.Names}}") 2>&1
+    if ($searxngContainer -eq "searxng") {
+        $useSearxng = $true
+        Write-Info "SearXNG detected - using self-hosted search (no rate limits)"
+    } else {
+        Write-Info "SearXNG not found - using DuckDuckGo for web search"
+    }
+
+    # Build web search env vars based on detection
+    if ($useSearxng) {
+        $searxngUrl = $ollamaUrl -replace ':11434', ':4000'
+        $webSearchArgs = @(
+            "-e", "ENABLE_RAG_WEB_SEARCH=true",
+            "-e", "RAG_WEB_SEARCH_ENGINE=searxng",
+            "-e", "SEARXNG_QUERY_URL=$searxngUrl",
+            "-e", "RAG_WEB_SEARCH_RESULT_COUNT=5"
+        )
+    } else {
+        $webSearchArgs = @(
+            "-e", "ENABLE_RAG_WEB_SEARCH=true",
+            "-e", "RAG_WEB_SEARCH_ENGINE=duckduckgo",
+            "-e", "RAG_WEB_SEARCH_RESULT_COUNT=5"
+        )
+    }
 
     # Build container run command
     # :cuda tag = CUDA support + connects to external Ollama (no embedded Ollama)
@@ -449,11 +472,8 @@ function Install-OpenWebUI {
         "run", "-d",
         "-p", "3000:8080",
         "-v", "open-webui:/app/backend/data",
-        "-e", "OLLAMA_BASE_URL=$ollamaUrl",
-        "-e", "ENABLE_RAG_WEB_SEARCH=true",
-        "-e", "RAG_WEB_SEARCH_ENGINE=searxng",
-        "-e", "SEARXNG_QUERY_URL=$searxngUrl",
-        "-e", "RAG_WEB_SEARCH_RESULT_COUNT=5",
+        "-e", "OLLAMA_BASE_URL=$ollamaUrl"
+    ) + $webSearchArgs + @(
         "--name", "open-webui",
         "--restart", "always"
     )

@@ -41,11 +41,20 @@ Open http://localhost:3000
 ### First-Time Setup
 
 1. Create an account (first user becomes admin)
-2. Web search is **pre-configured** with SearXNG (requires Perplexica stack running)
+2. Web search is **pre-configured** automatically
 
-To use a different provider, go to **Settings → Admin Settings → Web Search**:
-- **SearXNG** - Pre-configured, self-hosted (default)
-- **DuckDuckGo** - No API key needed, may have rate limits
+### Web Search Auto-Detection
+
+The setup script automatically detects the best search provider:
+
+| Scenario | Search Engine | Notes |
+|----------|---------------|-------|
+| **Perplexica installed** | SearXNG | Self-hosted, no rate limits |
+| **OpenWebUI only** | DuckDuckGo | No setup needed, may have rate limits |
+
+To change providers later, go to **Settings → Admin Settings → Web Search**:
+- **SearXNG** - Self-hosted (if Perplexica running)
+- **DuckDuckGo** - No API key needed
 - **Google** - Requires API key
 - **Brave** - Requires API key (privacy-focused)
 
