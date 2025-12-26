@@ -166,6 +166,29 @@ function Invoke-Compose {
     }
 }
 
+# Get host IP for container to reach Ollama
+function Get-OllamaHostUrl {
+    if ($script:ContainerRuntime -eq "docker") {
+        # Docker: host.docker.internal works reliably
+        return "http://host.docker.internal:11434"
+    } else {
+        # Podman: Get gateway IP from the active machine
+        try {
+            $defaultConn = podman system connection list --format "{{.Name}}" 2>&1 | Select-Object -First 1
+            if ($defaultConn) {
+                $gateway = podman machine ssh $defaultConn 'ip route show default' 2>&1 | Select-String -Pattern 'via (\d+\.\d+\.\d+\.\d+)' | ForEach-Object { $_.Matches.Groups[1].Value }
+                if ($gateway) {
+                    Write-Info "Podman host gateway: $gateway"
+                    return "http://${gateway}:11434"
+                }
+            }
+        } catch {}
+        # Fallback to host.docker.internal (may not work)
+        Write-Warn "Could not detect Podman gateway, using host.docker.internal"
+        return "http://host.docker.internal:11434"
+    }
+}
+
 # Check Ollama
 function Test-Ollama {
     Write-Step "2" "Checking Ollama"
@@ -315,6 +338,10 @@ function Install-OpenWebUI {
     Write-Info "Using image: $desiredImage"
     Write-Info "Pulling Open WebUI image (this may take a few minutes)..."
 
+    # Get the correct Ollama URL for this container runtime
+    $ollamaUrl = Get-OllamaHostUrl
+    Write-Info "Ollama URL: $ollamaUrl"
+
     # Build container run command
     # :cuda tag = CUDA support + connects to external Ollama (no embedded Ollama)
     # :main tag = CPU only + connects to external Ollama
@@ -322,16 +349,18 @@ function Install-OpenWebUI {
         "run", "-d",
         "-p", "3000:8080",
         "-v", "open-webui:/app/backend/data",
-        "-e", "OLLAMA_BASE_URL=http://host.docker.internal:11434",
+        "-e", "OLLAMA_BASE_URL=$ollamaUrl",
         "--name", "open-webui",
-        "--restart", "always",
-        "--add-host=host.docker.internal:host-gateway"
+        "--restart", "always"
     )
 
-    # Add GPU support for CUDA image (Docker only - Podman WSL2 has issues)
-    if ($hasGPU -and $script:ContainerRuntime -eq "docker") {
-        Write-Info "Enabling GPU passthrough for Docker"
-        $containerArgs += @("--gpus=all")
+    # Add host gateway for Docker (not needed for Podman with direct IP)
+    if ($script:ContainerRuntime -eq "docker") {
+        $containerArgs += @("--add-host=host.docker.internal:host-gateway")
+        if ($hasGPU) {
+            Write-Info "Enabling GPU passthrough for Docker"
+            $containerArgs += @("--gpus=all")
+        }
     }
 
     $containerArgs += @($desiredImage)
