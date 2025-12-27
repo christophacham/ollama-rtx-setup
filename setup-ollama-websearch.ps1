@@ -16,8 +16,8 @@
 #>
 
 param(
-    [ValidateSet("OpenWebUI", "Perplexica", "Both")]
-    [string]$Setup = "OpenWebUI",
+    [ValidateSet("OpenWebUI", "Perplexica", "Both", "")]
+    [string]$Setup = "",
     [switch]$SkipModels,
     [switch]$SkipContainers,
     [switch]$Uninstall,
@@ -152,8 +152,8 @@ function Show-Help {
 Usage: .\setup-ollama-websearch.ps1 [options]
 
 Options:
-    -Setup <type>    Choose setup type:
-                     - OpenWebUI (default) - Beautiful UI with web search
+    -Setup <type>    Choose setup type (prompts interactively if omitted):
+                     - OpenWebUI - Beautiful UI with web search
                      - Perplexica - Full privacy with SearXNG
                      - Both - Install both options
     -SkipModels      Skip downloading web search optimized models
@@ -163,7 +163,8 @@ Options:
     -Help            Show this help message
 
 Examples:
-    .\setup-ollama-websearch.ps1                     # Install Open WebUI
+    .\setup-ollama-websearch.ps1                     # Interactive menu
+    .\setup-ollama-websearch.ps1 -Setup OpenWebUI    # Install Open WebUI
     .\setup-ollama-websearch.ps1 -Setup Perplexica   # Install Perplexica
     .\setup-ollama-websearch.ps1 -Setup Both         # Install both
     .\setup-ollama-websearch.ps1 -Uninstall          # Remove containers
@@ -185,6 +186,30 @@ Web Search Options:
       - Access: http://localhost:3002 (frontend)
                 http://localhost:4000 (SearXNG)
 "@
+}
+
+# Interactive setup menu
+function Show-SetupMenu {
+    Write-Host ""
+    $title = "Web Search Setup"
+    $message = "Which web search interface would you like to install?"
+
+    $options = @(
+        [System.Management.Automation.Host.ChoiceDescription]::new(
+            "&OpenWebUI", "ChatGPT-like interface with built-in web search (Recommended)")
+        [System.Management.Automation.Host.ChoiceDescription]::new(
+            "&Perplexica", "Perplexity AI alternative with SearXNG for full privacy")
+        [System.Management.Automation.Host.ChoiceDescription]::new(
+            "&Both", "Install both Open WebUI and Perplexica")
+    )
+
+    $result = $Host.UI.PromptForChoice($title, $message, $options, 0)
+
+    switch ($result) {
+        0 { return "OpenWebUI" }
+        1 { return "Perplexica" }
+        2 { return "Both" }
+    }
 }
 
 # Detect container runtime (Docker or Podman)
@@ -900,6 +925,20 @@ function Main {
         return
     }
 
+    # If -Setup not provided, prompt interactively
+    if (-not $Setup) {
+        if ([Environment]::UserInteractive -and $Host.Name -ne 'ServerRemoteHost') {
+            $script:SelectedSetup = Show-SetupMenu
+            Write-Info "Selected: $($script:SelectedSetup)"
+        } else {
+            # Non-interactive: default to OpenWebUI
+            $script:SelectedSetup = "OpenWebUI"
+            Write-Info "Non-interactive mode: defaulting to OpenWebUI"
+        }
+    } else {
+        $script:SelectedSetup = $Setup
+    }
+
     # Set image registry if using local mirror
     if ($UseLocalRegistry) {
         $script:ImageRegistry = "ghcr.io/christophacham/ollama-rtx-setup"
@@ -925,7 +964,7 @@ function Main {
     }
 
     if (-not $SkipContainers) {
-        switch ($Setup) {
+        switch ($script:SelectedSetup) {
             "OpenWebUI" {
                 Install-OpenWebUI | Out-Null
             }
@@ -939,7 +978,7 @@ function Main {
         }
     }
 
-    Show-Complete -SetupType $Setup
+    Show-Complete -SetupType $script:SelectedSetup
 }
 
 # Run
