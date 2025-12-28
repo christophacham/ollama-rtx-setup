@@ -385,15 +385,19 @@ function Set-OllamaContainerAccess {
 }
 
 # Download web search optimized models
+# Optimized for RTX 5090 (32GB VRAM) - leaves ~14GB for context
 function Install-WebSearchModels {
     Write-Step "4" "Installing Web Search Optimized Models"
 
     $models = @(
-        @{ Name = "llama3.1:8b"; Desc = "Fast web search queries"; Size = "~5GB" },
-        @{ Name = "mistral:7b"; Desc = "Efficient general web tasks"; Size = "~4GB" }
+        @{ Name = "qwen2.5:3b"; Desc = "Fast web search queries"; Size = "~2GB" },
+        @{ Name = "qwen2.5:14b"; Desc = "Synthesis and aggregation"; Size = "~8GB" },
+        @{ Name = "qwen2.5-coder:14b"; Desc = "Code generation"; Size = "~8GB" }
     )
 
-    Write-Host "`nDownloading lightweight models for fast web searches:" -ForegroundColor Yellow
+    Write-Host "`nDownloading models optimized for RTX 5090 (32GB VRAM):" -ForegroundColor Yellow
+    Write-Host "  Total VRAM: ~18GB | Remaining for context: ~14GB" -ForegroundColor Gray
+    Write-Host ""
     foreach ($model in $models) {
         Write-Host "  - $($model.Name) $($model.Size) - $($model.Desc)"
     }
@@ -772,6 +776,9 @@ search:
   safe_search: 0
   autocomplete: "duckduckgo"
   default_lang: "en"
+  formats:
+    - html
+    - json
 
 engines:
   - name: duckduckgo
@@ -980,10 +987,12 @@ function Show-Complete {
     }
 
     Write-Host ""
-    Write-Host "Recommended Models for Web Search:" -ForegroundColor Yellow
-    Write-Host "  - qwen3:32b      (best synthesis)"
-    Write-Host "  - deepseek-r1:32b (deep reasoning)"
-    Write-Host "  - llama3.1:8b    (fast queries)"
+    Write-Host "Installed Models (RTX 5090 optimized, ~18GB total):" -ForegroundColor Yellow
+    Write-Host "  - qwen2.5:3b       (fast web search queries)"
+    Write-Host "  - qwen2.5:14b      (synthesis/aggregation)"
+    Write-Host "  - qwen2.5-coder:14b (code generation)"
+    Write-Host ""
+    Write-Host "VRAM Budget: ~18GB used | ~14GB for context" -ForegroundColor Gray
     Write-Host ""
 }
 
