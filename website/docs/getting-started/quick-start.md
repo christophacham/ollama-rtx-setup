@@ -36,8 +36,24 @@ This script will:
 | VRAM | Models Installed |
 |------|------------------|
 | 32GB | qwen3:32b, deepseek-r1:32b, llama3.3:70b-instruct-q4_K_M |
-| 24GB | qwen3:32b, deepseek-r1:32b, llama3.1:8b |
-| 12GB | qwen3:14b, llama3.1:8b, mistral:7b |
+| 24GB | qwen3:32b, deepseek-r1:32b, qwen2.5:14b |
+| 12GB | qwen3:14b, qwen2.5:3b, qwen2.5-coder:14b |
+
+### Web Search Optimized Stack (RTX 5090)
+
+For web search use cases, the setup installs a specialized stack:
+
+```powershell
+.\setup-ollama-websearch.ps1 -Setup OpenWebUI -SingleUser
+```
+
+| Model | VRAM | Purpose |
+|-------|------|---------|
+| qwen2.5:3b | ~2GB | Fast web queries |
+| qwen2.5:14b | ~8GB | Synthesis |
+| qwen2.5-coder:14b | ~8GB | Code generation |
+
+**Total: ~18GB** leaving ~14GB for context windows.
 
 ## Step 3: Start Chatting
 

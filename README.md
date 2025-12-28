@@ -69,10 +69,23 @@ Complete setup for running powerful local AI models with Ollama on NVIDIA RTX 50
 
 | Model | Size | Best For | VRAM | Context | Notes |
 |-------|------|----------|------|---------|-------|
-| **llama3.1:8b** | ~5GB | Web search | ~6GB | 131K | Fast with tool calling support |
+| **qwen2.5:3b** | ~2GB | Web search | ~3GB | 32K | Lightning fast queries |
+| **qwen2.5:14b** | ~8GB | Synthesis | ~10GB | 32K | Balance of speed and quality |
+| **qwen2.5-coder:14b** | ~8GB | Coding | ~10GB | 32K | Efficient code generation |
 | **gemma3:12b** | ~7GB | General | ~9GB | 128K | Good balance of speed and quality |
 | **phi4:14b** | ~9GB | Reasoning | ~11GB | 32K | Efficient reasoning, function calling |
-| **mistral:7b** | ~4GB | Quick queries | ~5GB | 32K | Lightweight, good for simple tasks |
+
+### Web Search Optimized Stack (RTX 5090)
+
+The `setup-ollama-websearch.ps1` installs a specialized stack:
+
+| Model | VRAM | Purpose |
+|-------|------|---------|
+| qwen2.5:3b | ~2GB | Fast web queries |
+| qwen2.5:14b | ~8GB | Synthesis/aggregation |
+| qwen2.5-coder:14b | ~8GB | Code generation |
+
+**Total: ~18GB** leaving ~14GB for context windows.
 
 ### Uncensored Models (No Content Filters)
 
@@ -128,14 +141,22 @@ Backup and restore your Ollama models to/from external storage:
 
 ### `setup-ollama-websearch.ps1`
 
-Adds web search capabilities:
+Adds web search capabilities with optimized models and integrated testing:
 
 ```powershell
-.\setup-ollama-websearch.ps1                     # Install Open WebUI
+# Recommended: Single-user mode (no login required)
+.\setup-ollama-websearch.ps1 -Setup OpenWebUI -SingleUser
+
+.\setup-ollama-websearch.ps1                     # Interactive menu
 .\setup-ollama-websearch.ps1 -Setup Perplexica   # Install Perplexica
 .\setup-ollama-websearch.ps1 -Setup Both         # Install both
 .\setup-ollama-websearch.ps1 -Uninstall          # Remove containers
 ```
+
+**Features:**
+- Pulls 3 optimized models (qwen2.5:3b, qwen2.5:14b, qwen2.5-coder:14b)
+- Runs automated inference & web search testing
+- Pre-configures Open WebUI with web search enabled
 
 ## Web Search Options
 
@@ -177,14 +198,15 @@ Access at:
 
 | Task | Primary Model | Alternative | Notes |
 |------|--------------|-------------|-------|
-| Code completion | qwen2.5-coder:32b | deepseek-coder:33b | Best benchmarks on EvalPlus, LiveCodeBench |
+| Code completion | qwen2.5-coder:32b | qwen2.5-coder:14b | 14b for faster responses |
 | Code review | qwen2.5-coder:32b | qwen3:32b | Qwen3 adds reasoning for complex reviews |
 | Debugging | deepseek-r1:32b | phi4:14b | DeepSeek shows step-by-step thinking |
 | Complex reasoning | deepseek-r1:32b | qwen3:32b | Both have chain-of-thought capabilities |
 | Math & Logic | deepseek-r1:32b | phi4:14b | Phi-4 rivals 70B on AIME 2025 |
-| Web search | qwen3:32b | llama3.1:8b | Llama 3.1 for speed, Qwen3 for quality |
+| Web search (fast) | qwen2.5:3b | qwen2.5:14b | 3b for queries, 14b for synthesis |
+| Web search (deep) | qwen3:32b | deepseek-r1:32b | For complex multi-source analysis |
 | General chat | gemma3:27b | qwen3:32b | Gemma3 outperforms on LMArena |
-| Quick queries | phi4:14b | mistral:7b | Phi-4 best quality-to-size ratio |
+| Quick queries | qwen2.5:3b | phi4:14b | qwen2.5:3b fastest at ~2GB VRAM |
 
 ### New in 2025
 

@@ -16,6 +16,7 @@ PowerShell scripts for automated setup and management.
 | `backup-ollama-models.ps1` | Backup/restore models to external storage |
 | `debug-ollama-connection.ps1` | Diagnose container connectivity issues |
 | `test-ollama-stack.ps1` | Test suite for verifying setup |
+| `test-searxng-engines.ps1` | Test each SearXNG search engine individually |
 | `cleanup-containers.ps1` | Stop and remove stack containers |
 | `sync-container-images.ps1` | Mirror container images to your registry |
 
@@ -63,12 +64,15 @@ Models are selected based on your VRAM:
 
 ## setup-ollama-websearch.ps1
 
-Installs web search integration.
+Installs web search integration with optimized models and integrated testing.
 
 ### Usage
 
 ```powershell
-# Install Open WebUI (default)
+# Recommended: Single-user mode (no login required)
+.\setup-ollama-websearch.ps1 -Setup OpenWebUI -SingleUser
+
+# Interactive menu (prompts for choice)
 .\setup-ollama-websearch.ps1
 
 # Install Perplexica + SearXNG
@@ -77,12 +81,38 @@ Installs web search integration.
 # Install both
 .\setup-ollama-websearch.ps1 -Setup Both
 
+# Skip model downloads
+.\setup-ollama-websearch.ps1 -Setup OpenWebUI -SkipModels
+
 # Use mirrored images from your registry
 .\setup-ollama-websearch.ps1 -UseLocalRegistry
 
 # Remove all web search containers
 .\setup-ollama-websearch.ps1 -Uninstall
 ```
+
+### Models Installed (RTX 5090 Optimized)
+
+The script automatically pulls models optimized for 32GB VRAM:
+
+| Model | VRAM | Purpose |
+|-------|------|---------|
+| qwen2.5:3b | ~2GB | Fast web search queries |
+| qwen2.5:14b | ~8GB | Synthesis & aggregation |
+| qwen2.5-coder:14b | ~8GB | Code generation |
+
+**Total: ~18GB** leaving ~14GB for context windows.
+
+### Integrated Testing
+
+After installation, the script runs a 4-phase test:
+
+| Phase | Test | Description |
+|-------|------|-------------|
+| 1 | Model inference | Each model responds to a prompt |
+| 2 | SearXNG check | Verifies search engine returns results |
+| 3 | Web context | Model processes search results |
+| 4 | Log check | Open WebUI shows web search activity |
 
 ### Container Runtime Detection
 

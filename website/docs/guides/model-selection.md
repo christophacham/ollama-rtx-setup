@@ -16,6 +16,25 @@ Different models excel at different tasks. A model optimized for coding may stru
 - **VRAM budget** - What fits on your GPU
 - **Accuracy needs** - When "good enough" vs. "best possible"
 
+## RTX 5090 Optimized Stack (32GB VRAM)
+
+The setup script installs an optimized combination for RTX 5090:
+
+| Model | VRAM | Purpose |
+|-------|------|---------|
+| **qwen2.5:3b** | ~2GB | Fast web search queries |
+| **qwen2.5:14b** | ~8GB | Synthesis & aggregation |
+| **qwen2.5-coder:14b** | ~8GB | Code generation |
+
+**Total: ~18GB** | **Remaining for context: ~14GB**
+
+This leaves headroom for large context windows and concurrent model loading.
+
+```powershell
+# Install optimized stack
+.\setup-ollama-websearch.ps1 -Setup OpenWebUI
+```
+
 ## Recommended Models by Task
 
 ### Coding & Development
@@ -70,19 +89,23 @@ ollama run deepseek-r1:32b "Prove that there are infinitely many prime numbers"
 
 | Model | Size | Why Choose It |
 |-------|------|---------------|
-| **qwen3:32b** | 32B | Best at synthesizing search results |
-| **llama3.1:8b** | 8B | Fast for quick searches |
+| **qwen2.5:3b** | 3B | Lightning fast queries (~2GB VRAM) |
+| **qwen2.5:14b** | 14B | Synthesize and aggregate results |
+| **qwen3:32b** | 32B | Best at complex multi-source synthesis |
 | **deepseek-r1:32b** | 32B | Deep analysis of sources |
+
+**Why qwen2.5 for web search?** The qwen2.5 family offers excellent speed-to-quality ratio. The 3B model handles simple queries in milliseconds while the 14B provides deeper synthesis without the overhead of larger models.
 
 ## Model Comparison Matrix
 
 | Model | Coding | Reasoning | Chat | Creative | Speed |
 |-------|--------|-----------|------|----------|-------|
+| qwen2.5:3b | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★☆☆☆ | ★★★★★ |
+| qwen2.5:14b | ★★★★☆ | ★★★★☆ | ★★★★☆ | ★★★☆☆ | ★★★★☆ |
+| qwen2.5-coder:14b | ★★★★★ | ★★★☆☆ | ★★★☆☆ | ★★☆☆☆ | ★★★★☆ |
 | qwen3:32b | ★★★★★ | ★★★★☆ | ★★★★☆ | ★★★★☆ | ★★★☆☆ |
 | deepseek-r1:32b | ★★★★☆ | ★★★★★ | ★★★☆☆ | ★★★☆☆ | ★★★☆☆ |
 | llama3.3:70b | ★★★★☆ | ★★★★★ | ★★★★★ | ★★★★★ | ★★☆☆☆ |
-| llama3.1:8b | ★★★☆☆ | ★★★☆☆ | ★★★★☆ | ★★★☆☆ | ★★★★★ |
-| mistral:7b | ★★★☆☆ | ★★★☆☆ | ★★★★☆ | ★★★☆☆ | ★★★★★ |
 | phi-4:14b | ★★★★☆ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★★☆ |
 
 ## Quantization Guide

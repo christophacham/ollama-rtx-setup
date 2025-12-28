@@ -174,7 +174,9 @@ A Perplexity AI alternative that's 100% self-hosted and private.
 
 1. Open http://localhost:3002
 2. Click the settings icon (gear) in the sidebar
-3. Under **Chat Model**, select **Ollama** and choose a model (e.g., `llama3.1:8b`)
+3. Under **Chat Model**, select **Ollama** and choose a model:
+   - `qwen2.5:3b` for fast queries
+   - `qwen2.5:14b` for better synthesis
 4. Under **Embedding Model**, select **Local** and choose `BGE Small`
 5. Click **Save** and start searching
 
@@ -370,13 +372,17 @@ Sources:
 
 ### Model Selection for Search
 
-Use fast models for search synthesis:
+The setup script installs optimized models for web search (RTX 5090, 32GB VRAM):
 
-| Task | Recommended Model |
-|------|-------------------|
-| Quick lookups | llama3.1:8b |
-| Deep research | qwen3:32b |
-| Academic work | deepseek-r1:32b |
+| Task | Recommended Model | VRAM |
+|------|-------------------|------|
+| Quick lookups | qwen2.5:3b | ~2GB |
+| Synthesis | qwen2.5:14b | ~8GB |
+| Code-related | qwen2.5-coder:14b | ~8GB |
+| Deep research | qwen3:32b | ~20GB |
+| Academic work | deepseek-r1:32b | ~20GB |
+
+**Total web search stack: ~18GB** leaving ~14GB for context windows.
 
 ### Prompt Engineering
 
@@ -415,4 +421,46 @@ Some engines may be blocked or rate-limited:
 ```powershell
 # Access SearXNG directly to test
 curl http://localhost:4000/search?q=test&format=json
+```
+
+## Testing Your Setup
+
+The setup script includes integrated testing that runs automatically after installation.
+
+### What Gets Tested
+
+| Phase | Test | What It Checks |
+|-------|------|----------------|
+| 1 | Model inference | Each model responds to a simple prompt |
+| 2 | SearXNG availability | Search engine returns results |
+| 3 | Web context | Model processes search results |
+| 4 | Log check | Open WebUI shows web search activity |
+
+### Manual Testing
+
+Test SearXNG engines individually:
+
+```powershell
+.\test-searxng-engines.ps1
+```
+
+Sample output:
+```
+[OK]   duckduckgo    (3 results, 0.8s)
+[OK]   google        (5 results, 1.2s)
+[WARN] bing          (0 results - may be rate-limited)
+[OK]   wikipedia     (2 results, 0.5s)
+
+Summary: 3/4 engines working
+```
+
+### Test API Directly
+
+```powershell
+# Test model inference
+$body = @{model="qwen2.5:3b"; prompt="Say OK"; stream=$false} | ConvertTo-Json
+Invoke-RestMethod -Uri "http://localhost:11434/api/generate" -Method Post -Body $body -ContentType "application/json"
+
+# Test SearXNG
+Invoke-RestMethod -Uri "http://localhost:4000/search?q=test&format=json"
 ```
