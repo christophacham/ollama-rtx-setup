@@ -22,6 +22,7 @@ param(
     [switch]$SkipContainers,
     [switch]$Uninstall,
     [switch]$UseLocalRegistry,
+    [switch]$SingleUser,
     [switch]$Help
 )
 
@@ -29,6 +30,37 @@ param(
 $script:ContainerRuntime = $null
 $script:ComposeCommand = $null
 $script:ImageRegistry = $null
+$script:WebUISecretKey = $null
+
+# Generate or retrieve persistent secret key for Open WebUI
+function Get-WebUISecretKey {
+    $secretFile = Join-Path $env:USERPROFILE ".ollama-rtx-setup-secret"
+
+    if (Test-Path $secretFile) {
+        $key = Get-Content $secretFile -Raw
+        if ($key -and $key.Length -ge 32) {
+            return $key.Trim()
+        }
+    }
+
+    # Generate new 48-char hex key
+    $key = [guid]::NewGuid().ToString().Replace("-","") + [guid]::NewGuid().ToString().Replace("-","").Substring(0,16)
+    Set-Content $secretFile $key -NoNewline
+    Write-Info "Generated new WEBUI_SECRET_KEY (saved for persistence)"
+    return $key
+}
+
+# Get installed Ollama models for pre-selection
+function Get-OllamaModels {
+    try {
+        $response = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -Method Get -TimeoutSec 5 -ErrorAction Stop
+        if ($response.models -and $response.models.Count -gt 0) {
+            $modelNames = $response.models | ForEach-Object { $_.name }
+            return ($modelNames -join ',')
+        }
+    } catch {}
+    return $null
+}
 
 # Get image reference (supports local registry mirroring)
 function Get-ImageRef {
@@ -156,6 +188,7 @@ Options:
                      - OpenWebUI - Beautiful UI with web search
                      - Perplexica - Full privacy with SearXNG
                      - Both - Install both options
+    -SingleUser      No login required (recommended for personal use)
     -SkipModels      Skip downloading web search optimized models
     -SkipContainers  Skip container setup (config only)
     -Uninstall       Remove web search containers
@@ -164,6 +197,7 @@ Options:
 
 Examples:
     .\setup-ollama-websearch.ps1                     # Interactive menu
+    .\setup-ollama-websearch.ps1 -Setup OpenWebUI -SingleUser  # Ready-to-use
     .\setup-ollama-websearch.ps1 -Setup OpenWebUI    # Install Open WebUI
     .\setup-ollama-websearch.ps1 -Setup Perplexica   # Install Perplexica
     .\setup-ollama-websearch.ps1 -Setup Both         # Install both
@@ -490,6 +524,16 @@ function Install-OpenWebUI {
         )
     }
 
+    # Get persistent secret key for session management
+    $secretKey = Get-WebUISecretKey
+    Write-Info "Using persistent WEBUI_SECRET_KEY"
+
+    # Get installed models for pre-selection
+    $defaultModels = Get-OllamaModels
+    if ($defaultModels) {
+        Write-Info "Pre-selecting models: $defaultModels"
+    }
+
     # Build container run command
     # :cuda tag = CUDA support + connects to external Ollama (no embedded Ollama)
     # :main tag = CPU only + connects to external Ollama
@@ -497,8 +541,22 @@ function Install-OpenWebUI {
         "run", "-d",
         "-p", "3000:8080",
         "-v", "open-webui:/app/backend/data",
-        "-e", "OLLAMA_BASE_URL=$ollamaUrl"
-    ) + $webSearchArgs + @(
+        "-e", "OLLAMA_BASE_URL=$ollamaUrl",
+        "-e", "WEBUI_SECRET_KEY=$secretKey"
+    ) + $webSearchArgs
+
+    # Add single-user mode (no authentication)
+    if ($SingleUser) {
+        $containerArgs += @("-e", "WEBUI_AUTH=False")
+        Write-Info "Single-user mode enabled (no login required)"
+    }
+
+    # Add default models if available
+    if ($defaultModels) {
+        $containerArgs += @("-e", "DEFAULT_MODELS=$defaultModels")
+    }
+
+    $containerArgs += @(
         "--name", "open-webui",
         "--restart", "always"
     )
@@ -540,11 +598,19 @@ function Install-OpenWebUI {
         Write-Host "http://localhost:3000" -ForegroundColor Green
         Write-Host "  Image: $desiredImage (no embedded Ollama)" -ForegroundColor Gray
         Write-Host ""
-        Write-Host "  To enable web search:" -ForegroundColor Yellow
-        Write-Host "  1. Open http://localhost:3000"
-        Write-Host "  2. Create an account (first user becomes admin)"
-        Write-Host "  3. Go to Settings > Web Search"
-        Write-Host "  4. Enable and choose a provider (DuckDuckGo is free)"
+        if ($SingleUser) {
+            Write-Host "  Ready to use:" -ForegroundColor Yellow
+            Write-Host "  - No login required (single-user mode)"
+            Write-Host "  - Web search pre-enabled with DuckDuckGo"
+            if ($defaultModels) {
+                Write-Host "  - Models pre-selected: $defaultModels"
+            }
+        } else {
+            Write-Host "  First-time setup:" -ForegroundColor Yellow
+            Write-Host "  1. Open http://localhost:3000"
+            Write-Host "  2. Create an account (first user becomes admin)"
+            Write-Host "  3. Web search is pre-enabled with DuckDuckGo"
+        }
         Write-Host ""
         return $true
     } catch {
@@ -881,11 +947,16 @@ function Show-Complete {
             Write-Host "Open WebUI: " -NoNewline
             Write-Host "http://localhost:3000" -ForegroundColor Cyan
             Write-Host ""
-            Write-Host "Quick Start:" -ForegroundColor Yellow
-            Write-Host "  1. Open http://localhost:3000"
-            Write-Host "  2. Create account (first user = admin)"
-            Write-Host "  3. Settings > Web Search > Enable"
-            Write-Host "  4. Choose DuckDuckGo (no API key needed)"
+            if ($SingleUser) {
+                Write-Host "Ready to use! (single-user mode)" -ForegroundColor Green
+                Write-Host "  - No login required"
+                Write-Host "  - Web search pre-enabled"
+            } else {
+                Write-Host "Quick Start:" -ForegroundColor Yellow
+                Write-Host "  1. Open http://localhost:3000"
+                Write-Host "  2. Create account (first user = admin)"
+                Write-Host "  3. Web search is pre-enabled"
+            }
         }
         "Perplexica" {
             Write-Host "Perplexica: " -NoNewline

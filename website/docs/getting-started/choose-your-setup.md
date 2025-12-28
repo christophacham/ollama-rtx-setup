@@ -34,11 +34,19 @@ Not sure which components to install? This guide helps you decide.
 | I want to... | Install | Containers | Command |
 |--------------|---------|------------|---------|
 | Use AI from terminal/scripts | Ollama only | 0 | `setup-ollama.ps1` |
+| **Chat UI (ready to use)** | Open WebUI | 1 | `setup-ollama-websearch.ps1 -Setup OpenWebUI -SingleUser` |
 | Chat with a nice UI | Open WebUI | 1 | `setup-ollama-websearch.ps1 -Setup OpenWebUI` |
 | Chat + search the web | Open WebUI | 1 | Same as above |
 | Search multiple engines at once | Open WebUI + SearXNG | 2 | Install Perplexica first, then Open WebUI |
 | Get AI research with citations | Perplexica + SearXNG | 3 | `setup-ollama-websearch.ps1 -Setup Perplexica` |
 | Have everything | Both | 3 | `setup-ollama-websearch.ps1 -Setup Both` |
+
+:::tip Personal Use Recommendation
+Add `-SingleUser` to skip account creation. Open WebUI will be immediately usable with:
+- No login required
+- Web search pre-enabled
+- All your models pre-selected
+:::
 
 ## Understanding the Components
 
@@ -59,6 +67,15 @@ Terminal ──→ Ollama ──→ GPU ──→ Response
 ```
 Browser ──→ Open WebUI ──→ Ollama ──→ Response
 ```
+
+**Setup options**:
+- `-SingleUser` - No login, ready to use immediately (recommended for personal use)
+- Standard - First user to sign up becomes admin
+
+**Pre-configured features**:
+- Web search enabled with DuckDuckGo (or SearXNG if available)
+- All installed models pre-selected
+- Persistent sessions (stay logged in across restarts)
 
 **Web search**: Open WebUI can search the web, but only **one search engine at a time** (DuckDuckGo OR Google OR Brave - you pick one in settings).
 

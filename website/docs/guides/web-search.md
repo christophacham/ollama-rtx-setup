@@ -68,6 +68,12 @@ A beautiful, feature-rich chat interface with built-in web search.
 
 ### Installation
 
+**Recommended (single-user mode - no login required):**
+```powershell
+.\setup-ollama-websearch.ps1 -Setup OpenWebUI -SingleUser
+```
+
+**Standard (with user accounts):**
 ```powershell
 .\setup-ollama-websearch.ps1 -Setup OpenWebUI
 ```
@@ -76,8 +82,18 @@ A beautiful, feature-rich chat interface with built-in web search.
 
 Open http://localhost:3000
 
+### What Gets Pre-Configured
+
+The setup script automatically configures:
+- **Web search** - Pre-enabled with DuckDuckGo (or SearXNG if available)
+- **Models** - All your installed Ollama models pre-selected
+- **Session persistence** - Secret key saved so you stay logged in across restarts
+
 ### First-Time Setup
 
+With `-SingleUser`: **Nothing to do!** Open the URL and start chatting.
+
+Without `-SingleUser`:
 1. Create an account (first user becomes admin)
 2. Web search is **pre-configured** automatically
 

@@ -60,12 +60,13 @@ Ollama provides the simplest path from "nothing installed" to "chatting with a 7
 | Want This? | Run This | What You Get |
 |------------|----------|--------------|
 | Just AI chat (terminal) | `setup-ollama.ps1` | Ollama + models |
+| Chat UI (ready to use) | `setup-ollama-websearch.ps1 -Setup OpenWebUI -SingleUser` | Open WebUI, no login needed |
 | Chat UI + web search | `setup-ollama-websearch.ps1 -Setup OpenWebUI` | + Open WebUI |
 | AI research with citations | `setup-ollama-websearch.ps1 -Setup Perplexica` | + Perplexica + SearXNG |
 | Everything | `setup-ollama-websearch.ps1 -Setup Both` | All of the above |
 
-:::tip Not sure which to pick?
-Start with **Open WebUI** - it's the easiest and covers most use cases. You can always add Perplexica later.
+:::tip Recommended for personal use
+Use `-SingleUser` to skip account creation - Open WebUI will be ready to use immediately with web search pre-enabled.
 :::
 
 ## What This Repository Provides
