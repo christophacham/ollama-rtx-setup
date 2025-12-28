@@ -689,6 +689,30 @@ function Start-SearXNG {
     }
 }
 
+# Check if Open WebUI volume exists and offer to reset for fresh config
+function Reset-OpenWebUIVolume {
+    $volumeCheck = Invoke-Container @("volume", "ls", "--format", "{{.Name}}") 2>&1
+    if ($volumeCheck -match "open-webui") {
+        Write-Warn "Existing Open WebUI data volume detected"
+        Write-Host ""
+        Write-Host "  Environment variables (like web search settings) only apply on FIRST run." -ForegroundColor Yellow
+        Write-Host "  Your existing volume may have old settings that override new env vars." -ForegroundColor Yellow
+        Write-Host ""
+        $response = Read-Host "Delete volume for fresh start with all settings applied? (y/N)"
+        if ($response -eq "y" -or $response -eq "Y") {
+            Write-Info "Removing open-webui volume..."
+            Invoke-Container @("volume", "rm", "open-webui") 2>&1 | Out-Null
+            Write-Success "Volume removed - fresh settings will apply"
+            return $true
+        } else {
+            Write-Info "Keeping existing volume"
+            Write-Warn "You may need to enable Web Search manually in Admin Panel > Settings > Web Search"
+            return $false
+        }
+    }
+    return $true  # No volume = fresh install
+}
+
 # Install Open WebUI
 function Install-OpenWebUI {
     Write-Step "5" "Installing Open WebUI + SearXNG"
@@ -731,6 +755,8 @@ function Install-OpenWebUI {
                 Invoke-Container @("stop", "open-webui") 2>&1 | Out-Null
                 Invoke-Container @("rm", "open-webui") 2>&1 | Out-Null
                 Write-Success "Old container removed"
+                # Offer to reset volume for fresh settings
+                Reset-OpenWebUIVolume | Out-Null
             } else {
                 Write-Info "Keeping existing container"
                 $running = Invoke-Container @("ps", "--filter", "name=open-webui", "--format", "{{.Names}}") 2>&1
@@ -745,15 +771,18 @@ function Install-OpenWebUI {
             $running = Invoke-Container @("ps", "--filter", "name=open-webui", "--format", "{{.Names}}") 2>&1
             if ($running -eq "open-webui") {
                 Write-Success "Open WebUI is already running at http://localhost:3000"
-                return $true
             } else {
                 Write-Info "Starting existing container..."
                 Invoke-Container @("start", "open-webui")
+                Start-Sleep -Seconds 5
                 Write-Success "Open WebUI started at http://localhost:3000"
-                return $true
             }
+            return $true
         }
     }
+
+    # Check for existing volume (container may have been removed but volume persists)
+    Reset-OpenWebUIVolume | Out-Null
 
     # Log GPU status
     if ($hasGPU) {
