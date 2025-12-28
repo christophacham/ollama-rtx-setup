@@ -35,6 +35,39 @@ We chose [Ollama](https://ollama.ai) as the foundation for this setup:
 
 Ollama provides the simplest path from "nothing installed" to "chatting with a 70B model" - often in under 5 minutes.
 
+## Choose Your Setup
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 What do you want to do?                     │
+└─────────────────────────────────────────────────────────────┘
+                           │
+         ┌─────────────────┼─────────────────┐
+         ▼                 ▼                 ▼
+   Just run models    Chat interface    AI Research
+   (API/terminal)     with web search   (Perplexity-like)
+         │                 │                 │
+         ▼                 ▼                 ▼
+   ┌─────────────┐  ┌─────────────┐  ┌──────────────┐
+   │   Ollama    │  │ Open WebUI  │  │  Perplexica  │
+   │    only     │  │  (± SearXNG)│  │  + SearXNG   │
+   └─────────────┘  └─────────────┘  └──────────────┘
+    setup-ollama     setup-ollama-     setup-ollama-
+       .ps1          websearch.ps1     websearch.ps1
+                     -Setup OpenWebUI  -Setup Perplexica
+```
+
+| Want This? | Run This | What You Get |
+|------------|----------|--------------|
+| Just AI chat (terminal) | `setup-ollama.ps1` | Ollama + models |
+| Chat UI + web search | `setup-ollama-websearch.ps1 -Setup OpenWebUI` | + Open WebUI |
+| AI research with citations | `setup-ollama-websearch.ps1 -Setup Perplexica` | + Perplexica + SearXNG |
+| Everything | `setup-ollama-websearch.ps1 -Setup Both` | All of the above |
+
+:::tip Not sure which to pick?
+Start with **Open WebUI** - it's the easiest and covers most use cases. You can always add Perplexica later.
+:::
+
 ## What This Repository Provides
 
 ### Setup Scripts
@@ -45,8 +78,10 @@ Curated model lists based on extensive testing - which models excel at coding, r
 
 ### Web Search Integration
 Two options for AI-powered web search:
-- **Open WebUI** - Beautiful ChatGPT-like interface with built-in search
-- **Perplexica** - Privacy-focused Perplexity AI alternative with SearXNG
+- **[Open WebUI](/guides/web-search#option-1-open-webui)** - ChatGPT-like interface, uses one search engine at a time
+- **[Perplexica](/guides/web-search#option-2-perplexica--searxng)** - Perplexity AI alternative, uses SearXNG to search multiple engines at once
+
+See [Web Search Integration](/guides/web-search) to understand the difference.
 
 ### Management Tools
 - **ollama-manager** - Terminal UI for loading/unloading models

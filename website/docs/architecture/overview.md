@@ -100,6 +100,85 @@ Meta-search engine for Perplexica:
 - **Privacy** - No tracking, no ads
 - **Self-hosted** - Complete control
 
+## Setup Scenarios
+
+Different configurations depending on your needs:
+
+### Scenario A: Minimal (Ollama Only)
+
+```
+You ──→ Terminal / API ──→ Ollama ──→ Response
+                              │
+                              ▼
+                            GPU
+```
+- **Use case**: Developers, scripts, API access
+- **Containers**: 0
+- **Install**: `setup-ollama.ps1`
+
+### Scenario B: Chat Interface (Open WebUI)
+
+```
+You ──→ Open WebUI (:3000) ──→ Ollama ──→ AI Response
+              │
+              └──→ DuckDuckGo ──→ Web Results (single engine)
+```
+- **Use case**: General chat with web search
+- **Containers**: 1
+- **Install**: `setup-ollama-websearch.ps1 -Setup OpenWebUI`
+
+### Scenario C: Multi-Engine Search (Open WebUI + SearXNG)
+
+```
+You ──→ Open WebUI (:3000) ──→ Ollama ──→ AI Response
+              │
+              └──→ SearXNG (:4000) ──→ [DDG + Google + Bing + ...]
+                                              │
+                                              ▼
+                                       Aggregated Results
+```
+- **Use case**: Comprehensive search from multiple sources
+- **Containers**: 2
+- **Install**: `setup-ollama-websearch.ps1 -Setup Both` (then configure Open WebUI to use SearXNG)
+
+### Scenario D: AI Research (Perplexica + SearXNG)
+
+```
+You ──→ Perplexica (:3002) ──→ SearXNG (:4000) ──→ [Multiple Engines]
+              │                                           │
+              │                                           ▼
+              │                                    Web Results
+              │                                           │
+              └──────────→ Ollama (:11434) ←──────────────┘
+                                │
+                                ▼
+                     Synthesized Answer with Citations
+```
+- **Use case**: Deep research with numbered citations
+- **Containers**: 3 (SearXNG + Backend + Frontend)
+- **Install**: `setup-ollama-websearch.ps1 -Setup Perplexica`
+
+### Scenario E: Everything (Both UIs)
+
+```
+                    ┌──→ Open WebUI (:3000) ───┐
+                    │                          │
+You ────────────────┤                          ├──→ Ollama (:11434)
+                    │                          │
+                    └──→ Perplexica (:3002) ───┘
+                              │
+                              ▼
+                       SearXNG (:4000)
+                       (shared by both)
+```
+- **Use case**: Maximum flexibility
+- **Containers**: 3 (Open WebUI + Perplexica shares SearXNG)
+- **Install**: `setup-ollama-websearch.ps1 -Setup Both`
+
+:::tip Shared Components
+Ollama serves both UIs simultaneously. SearXNG is shared if both are installed.
+:::
+
 ## Data Flow
 
 ### Chat Request

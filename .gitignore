@@ -33,3 +33,11 @@ searxng/
 
 # Claude Code
 .claude/
+
+# Environment secrets
+.env
+.env.local
+*.env
+
+# Keep example templates
+!.env.example

@@ -6,6 +6,43 @@ sidebar_position: 2
 
 Enable AI-powered web search with your local Ollama models.
 
+## Which Setup Should I Use?
+
+**This is the key question.** The main difference is how many search engines run at once:
+
+| Setup | Search Engines | How It Works |
+|-------|---------------|--------------|
+| **Open WebUI alone** | ONE at a time | Pick DuckDuckGo OR Google OR Brave in settings |
+| **Open WebUI + SearXNG** | ALL at once | SearXNG queries multiple engines simultaneously |
+| **Perplexica + SearXNG** | ALL at once | Always uses SearXNG (it's required) |
+
+### What is SearXNG?
+
+SearXNG is a **meta-search engine** - it queries multiple search engines at once and combines their results:
+
+```
+┌─────────────┐
+│   SearXNG   │──→ DuckDuckGo ──→ results
+│  (combines  │──→ Google ──────→ results  ──→ Aggregated
+│   results)  │──→ Bing ────────→ results      Results
+│             │──→ Brave ───────→ results
+│             │──→ Wikipedia ───→ results
+└─────────────┘
+```
+
+### Quick Decision Guide
+
+| Want This? | Install This | Containers |
+|------------|--------------|------------|
+| Simple chat + basic search | Open WebUI only | 1 |
+| Chat + comprehensive multi-engine search | Open WebUI + SearXNG | 2 |
+| AI research with citations (Perplexity-like) | Perplexica + SearXNG | 3 |
+| Everything | Both (share SearXNG) | 3 |
+
+:::tip Key Insight
+If you install Perplexica, you get SearXNG automatically. Open WebUI can then use that same SearXNG instance for multi-engine search too!
+:::
+
 ## Why Web Search?
 
 LLMs have a knowledge cutoff date. Web search integration allows your local AI to:
@@ -14,15 +51,16 @@ LLMs have a knowledge cutoff date. Web search integration allows your local AI t
 - Research topics in real-time
 - Cite sources for factual claims
 
-## Two Options
+## Feature Comparison
 
 | Feature | Open WebUI | Perplexica |
 |---------|------------|------------|
 | **Interface** | ChatGPT-like | Perplexity-like |
-| **Search providers** | 15+ (DuckDuckGo, Google, Brave) | SearXNG (meta-search) |
+| **Search engines** | One at a time (or SearXNG) | Always multi-engine via SearXNG |
 | **Privacy** | Depends on provider | 100% self-hosted |
 | **Setup complexity** | Single container | 3 containers |
 | **Best for** | General use | Privacy-focused research |
+| **Citations** | Basic source links | Numbered references throughout |
 
 ## Option 1: Open WebUI
 
@@ -195,6 +233,85 @@ engines:
   - name: stackoverflow
     disabled: false
 ```
+
+## International Search Engines
+
+### Yandex Cloud API Setup
+
+The built-in Yandex engine in SearXNG is blocked by CAPTCHAs. Use Yandex Cloud's official Search API instead for reliable Russian-language search.
+
+#### Step 1: Create Yandex Cloud Account
+
+1. Go to [console.yandex.cloud](https://console.yandex.cloud)
+2. Sign up or log in with your Yandex account
+3. Create a billing account (free tier available)
+
+#### Step 2: Create Service Account
+
+1. In the Yandex Cloud console, go to your folder
+2. Navigate to **IAM** → **Service accounts**
+3. Click **Create service account**
+4. Name it `searxng-search`
+5. Click **Create**
+
+#### Step 3: Assign Search API Role
+
+1. Click on your new service account
+2. Go to **Roles** tab
+3. Click **Assign role**
+4. Add role: `search-api.webSearch.user`
+
+#### Step 4: Generate API Key
+
+1. In your service account, go to **API keys** tab
+2. Click **Create API key**
+3. Select scope: `yc.search-api.execute`
+4. **Save the key immediately** - shown only once!
+
+#### Step 5: Configure Environment
+
+Create a `.env` file in the project root (never commit this!):
+
+```bash
+# Copy from .env.example
+cp .env.example .env
+
+# Edit with your credentials
+YANDEX_API_KEY=your-api-key-here
+YANDEX_FOLDER_ID=your-folder-id-here
+```
+
+Your folder ID is in the console URL: `console.yandex.cloud/folders/YOUR_FOLDER_ID`
+
+#### Step 6: Restart SearXNG
+
+```powershell
+# Restart to pick up new environment variables
+podman-compose -f docker-compose-perplexica.yml down
+podman-compose -f docker-compose-perplexica.yml up -d
+```
+
+#### Usage
+
+Yandex Cloud Search is now available alongside other engines. Your queries will automatically include Russian search results.
+
+:::tip Free Tier
+Yandex Cloud offers 10,000 free search queries per day - more than enough for personal use.
+:::
+
+### Baidu Search (Chinese)
+
+For Chinese-language search, Baidu integration requires CAPTCHA handling. See the [advanced search configuration](#advanced-multi-language-search) section.
+
+### Advanced: Multi-Language Search
+
+For comprehensive international search with translation:
+
+1. **Query in English** → Results from all engines
+2. **SearXNG aggregates** → DuckDuckGo + Google + Yandex + Baidu
+3. **LLM synthesizes** → Translates and combines results
+
+The LLM (GPT-4, Claude, Qwen) naturally handles translation when presenting results to you in English.
 
 ## Comparing Search Results
 
