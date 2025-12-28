@@ -427,6 +427,144 @@ function Install-WebSearchModels {
     return $true
 }
 
+# Test a single model's inference capability via Ollama API
+function Test-ModelInference {
+    param(
+        [string]$ModelName,
+        [string]$Prompt = "Reply with only: OK",
+        [int]$TimeoutSec = 60
+    )
+
+    try {
+        $body = @{
+            model = $ModelName
+            prompt = $Prompt
+            stream = $false
+        } | ConvertTo-Json
+
+        $response = Invoke-RestMethod -Uri "http://localhost:11434/api/generate" `
+            -Method Post -Body $body -ContentType "application/json" -TimeoutSec $TimeoutSec -ErrorAction Stop
+
+        return @{
+            Success = $true
+            Response = $response.response
+        }
+    } catch {
+        return @{
+            Success = $false
+            Response = $_.Exception.Message
+        }
+    }
+}
+
+# Test SearXNG web search API
+function Test-SearXNG {
+    param([string]$Query = "test")
+
+    try {
+        $url = "http://localhost:4000/search?q=$([Uri]::EscapeDataString($Query))&format=json"
+        $response = Invoke-RestMethod -Uri $url -Method Get -TimeoutSec 10 -ErrorAction Stop
+
+        if ($response.results -and $response.results.Count -gt 0) {
+            return @{
+                Success = $true
+                ResultCount = $response.results.Count
+                FirstResult = $response.results[0].title
+            }
+        }
+        return @{ Success = $false; ResultCount = 0 }
+    } catch {
+        return @{ Success = $false; Error = $_.Exception.Message }
+    }
+}
+
+# Test all installed web search models with full web search integration
+function Test-InstalledModels {
+    Write-Step "4b" "Testing Models & Web Search"
+
+    $models = @("qwen2.5:3b", "qwen2.5:14b", "qwen2.5-coder:14b")
+    $passed = 0
+
+    Write-Host ""
+    Write-Host "Running inference test on each model..." -ForegroundColor Gray
+    Write-Host ""
+
+    # Phase 1: Basic inference test
+    foreach ($model in $models) {
+        Write-Info "Testing $model inference..."
+        $result = Test-ModelInference -ModelName $model -Prompt "Reply with only: OK"
+        if ($result.Success -and $result.Response -match "OK|ok") {
+            Write-Success "$model inference OK"
+            $passed++
+        } else {
+            Write-Warn "$model inference failed: $($result.Response)"
+        }
+    }
+
+    Write-Host ""
+    if ($passed -eq $models.Count) {
+        Write-Success "All $passed/$($models.Count) models passed basic inference"
+    } else {
+        Write-Warn "$passed/$($models.Count) models passed basic inference"
+    }
+
+    # Phase 2: Test SearXNG if available
+    Write-Host ""
+    Write-Info "Checking SearXNG availability..."
+
+    $searxngRunning = $false
+    try {
+        $null = Invoke-RestMethod -Uri "http://localhost:4000/config" -Method Get -TimeoutSec 3 -ErrorAction Stop
+        $searxngRunning = $true
+    } catch {}
+
+    if ($searxngRunning) {
+        Write-Success "SearXNG is running"
+
+        $searchResult = Test-SearXNG -Query "what is the current date"
+        if ($searchResult.Success) {
+            Write-Success "SearXNG returned $($searchResult.ResultCount) results"
+            Write-Info "First result: $($searchResult.FirstResult)"
+
+            # Phase 3: Test model with web search context
+            Write-Host ""
+            Write-Info "Testing model with web search context..."
+
+            $webContext = "Based on web search results: $($searchResult.FirstResult). What is this about? Reply briefly."
+            $webResult = Test-ModelInference -ModelName $models[0] -Prompt $webContext -TimeoutSec 90
+
+            if ($webResult.Success) {
+                Write-Success "$($models[0]) processed web search context"
+                Write-Host "  Response: $($webResult.Response.Substring(0, [Math]::Min(100, $webResult.Response.Length)))..." -ForegroundColor Gray
+            } else {
+                Write-Warn "Web search context test failed"
+            }
+        } else {
+            Write-Warn "SearXNG search returned no results"
+        }
+    } else {
+        Write-Info "SearXNG not running - web search test skipped"
+        Write-Info "Run with -Setup Perplexica or -Setup Both to enable SearXNG"
+    }
+
+    # Phase 4: Check Open WebUI logs if running
+    $openWebuiRunning = Invoke-Container @("ps", "--filter", "name=open-webui", "--format", "{{.Names}}") 2>&1
+    if ($openWebuiRunning -eq "open-webui") {
+        Write-Host ""
+        Write-Info "Open WebUI is running - checking recent logs for web search activity..."
+        $logs = Invoke-Container @("logs", "--tail", "20", "open-webui") 2>&1 | Out-String
+
+        if ($logs -match "web.*search|searx|duckduckgo|RAG") {
+            Write-Success "Web search activity detected in Open WebUI logs"
+        } else {
+            Write-Info "No recent web search activity in logs (normal if no queries sent)"
+        }
+    }
+
+    Write-Host ""
+    return $passed -eq $models.Count
+}
+
 # Install Open WebUI
 function Install-OpenWebUI {
     Write-Step "5" "Installing Open WebUI"
@@ -1041,6 +1179,7 @@ function Main {
 
     if (-not $SkipModels) {
         Install-WebSearchModels | Out-Null
+        Test-InstalledModels | Out-Null
     }
 
     if (-not $SkipContainers) {
