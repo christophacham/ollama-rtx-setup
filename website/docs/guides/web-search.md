@@ -379,13 +379,12 @@ The setup script installs optimized models for web search (RTX 5090, 32GB VRAM):
 
 | Task | Recommended Model | VRAM |
 |------|-------------------|------|
-| Quick lookups | qwen2.5:3b | ~2GB |
-| Synthesis | qwen2.5:14b | ~8GB |
-| Code-related | qwen2.5-coder:14b | ~8GB |
-| Deep research | qwen3:32b | ~20GB |
-| Academic work | deepseek-r1:32b | ~20GB |
+| Quick lookups | qwen2.5:3b | ~4GB |
+| Synthesis & code | qwen2.5-coder:14b | ~17GB |
 
-**Total web search stack: ~18GB** leaving ~14GB for context windows.
+**Total: ~21GB** - both models fit in VRAM simultaneously, leaving ~11GB for context.
+
+For deep research or academic work, you can manually load larger models like `qwen3:32b` or `deepseek-r1:32b` (Ollama will swap as needed).
 
 ### Prompt Engineering
 

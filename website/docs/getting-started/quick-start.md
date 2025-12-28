@@ -49,11 +49,10 @@ For web search use cases, the setup installs a specialized stack:
 
 | Model | VRAM | Purpose |
 |-------|------|---------|
-| qwen2.5:3b | ~2GB | Fast web queries |
-| qwen2.5:14b | ~8GB | Synthesis |
-| qwen2.5-coder:14b | ~8GB | Code generation |
+| qwen2.5:3b | ~4GB | Fast web queries |
+| qwen2.5-coder:14b | ~17GB | Synthesis and code |
 
-**Total: ~18GB** leaving ~14GB for context windows.
+**Total: ~21GB** - both models fit in VRAM simultaneously, leaving ~11GB for context.
 
 ## Step 3: Start Chatting
 

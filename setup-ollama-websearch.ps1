@@ -50,16 +50,11 @@ function Get-WebUISecretKey {
     return $key
 }
 
-# Get installed Ollama models for pre-selection
-function Get-OllamaModels {
-    try {
-        $response = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -Method Get -TimeoutSec 5 -ErrorAction Stop
-        if ($response.models -and $response.models.Count -gt 0) {
-            $modelNames = $response.models | ForEach-Object { $_.name }
-            return ($modelNames -join ',')
-        }
-    } catch {}
-    return $null
+# Get web search optimized models for pre-selection (not all installed models)
+function Get-DefaultModels {
+    # Only return the 2 web search optimized models
+    # Users can discover more in Open WebUI settings
+    return "qwen2.5:3b,qwen2.5-coder:14b"
 }
 
 # Get image reference (supports local registry mirroring)
@@ -386,18 +381,17 @@ function Set-OllamaContainerAccess {
 }
 
 # Download web search optimized models
-# Optimized for RTX 5090 (32GB VRAM) - leaves ~14GB for context
+# Optimized for RTX 5090 (32GB VRAM) - both models can be loaded simultaneously
 function Install-WebSearchModels {
     Write-Step "4" "Installing Web Search Optimized Models"
 
     $models = @(
-        @{ Name = "qwen2.5:3b"; Desc = "Fast web search queries"; Size = "~2GB" },
-        @{ Name = "qwen2.5:14b"; Desc = "Synthesis and aggregation"; Size = "~8GB" },
-        @{ Name = "qwen2.5-coder:14b"; Desc = "Code generation"; Size = "~8GB" }
+        @{ Name = "qwen2.5:3b"; Desc = "Fast web search queries"; Size = "~4GB" },
+        @{ Name = "qwen2.5-coder:14b"; Desc = "Synthesis and code"; Size = "~17GB" }
     )
 
     Write-Host "`nDownloading models optimized for RTX 5090 (32GB VRAM):" -ForegroundColor Yellow
-    Write-Host "  Total VRAM: ~18GB | Remaining for context: ~14GB" -ForegroundColor Gray
+    Write-Host "  Total VRAM: ~21GB | Remaining for context: ~11GB" -ForegroundColor Gray
     Write-Host ""
     foreach ($model in $models) {
         Write-Host "  - $($model.Name) $($model.Size) - $($model.Desc)"
@@ -483,7 +477,7 @@ function Test-SearXNG {
 function Test-InstalledModels {
     Write-Step "4b" "Testing Models & Web Search"
 
-    $models = @("qwen2.5:3b", "qwen2.5:14b", "qwen2.5-coder:14b")
+    $models = @("qwen2.5:3b", "qwen2.5-coder:14b")
     $passed = 0
 
     Write-Host ""
@@ -790,11 +784,9 @@ function Install-OpenWebUI {
     $secretKey = Get-WebUISecretKey
     Write-Info "Using persistent WEBUI_SECRET_KEY"
 
-    # Get installed models for pre-selection
-    $defaultModels = Get-OllamaModels
-    if ($defaultModels) {
-        Write-Info "Pre-selecting models: $defaultModels"
-    }
+    # Get web search optimized models for pre-selection (not all installed)
+    $defaultModels = Get-DefaultModels
+    Write-Info "Pre-selecting models: $defaultModels"
 
     # Build container run command
     # :cuda tag = CUDA support + connects to external Ollama (no embedded Ollama)
@@ -813,10 +805,8 @@ function Install-OpenWebUI {
         Write-Info "Single-user mode enabled (no login required)"
     }
 
-    # Add default models if available
-    if ($defaultModels) {
-        $containerArgs += @("-e", "DEFAULT_MODELS=$defaultModels")
-    }
+    # Add default models (web search optimized only)
+    $containerArgs += @("-e", "DEFAULT_MODELS=$defaultModels")
 
     $containerArgs += @(
         "--name", "open-webui",
@@ -864,9 +854,7 @@ function Install-OpenWebUI {
             Write-Host "  Ready to use:" -ForegroundColor Yellow
             Write-Host "  - No login required (single-user mode)"
             Write-Host "  - Web search pre-enabled with SearXNG"
-            if ($defaultModels) {
-                Write-Host "  - Models pre-selected: $defaultModels"
-            }
+            Write-Host "  - Models pre-selected: $defaultModels"
         } else {
             Write-Host "  First-time setup:" -ForegroundColor Yellow
             Write-Host "  1. Open http://localhost:3000"
@@ -1247,12 +1235,12 @@ function Show-Complete {
     }
 
     Write-Host ""
-    Write-Host "Installed Models (RTX 5090 optimized, ~18GB total):" -ForegroundColor Yellow
-    Write-Host "  - qwen2.5:3b       (fast web search queries)"
-    Write-Host "  - qwen2.5:14b      (synthesis/aggregation)"
-    Write-Host "  - qwen2.5-coder:14b (code generation)"
+    Write-Host "Installed Models (RTX 5090 optimized, ~21GB total):" -ForegroundColor Yellow
+    Write-Host "  - qwen2.5:3b        (~4GB)  - fast web search queries"
+    Write-Host "  - qwen2.5-coder:14b (~17GB) - synthesis and code"
     Write-Host ""
-    Write-Host "VRAM Budget: ~18GB used | ~14GB for context" -ForegroundColor Gray
+    Write-Host "Both models fit in VRAM simultaneously!" -ForegroundColor Green
+    Write-Host "VRAM Budget: ~21GB used | ~11GB for context" -ForegroundColor Gray
     Write-Host ""
 }
 
