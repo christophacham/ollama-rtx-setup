@@ -209,9 +209,10 @@ Container Runtime:
 Web Search Options:
     Open WebUI:
       - ChatGPT-like interface
-      - 15+ search providers (DuckDuckGo, Google, Brave, etc.)
-      - Easy setup, single container
-      - Access: http://localhost:3000
+      - Multi-engine search via SearXNG (DuckDuckGo, Google, Brave, etc.)
+      - Self-hosted, no rate limits
+      - Access: http://localhost:3000 (Open WebUI)
+                http://localhost:4000 (SearXNG)
 
     Perplexica:
       - Perplexity AI alternative
@@ -543,8 +544,9 @@ function Test-InstalledModels {
             Write-Warn "SearXNG search returned no results"
         }
     } else {
-        Write-Info "SearXNG not running - web search test skipped"
-        Write-Info "Run with -Setup Perplexica or -Setup Both to enable SearXNG"
+        Write-Warn "SearXNG not running - this is unexpected"
+        Write-Info "SearXNG should have started automatically with Open WebUI"
+        Write-Info "Try: .\setup-ollama-websearch.ps1 -Setup OpenWebUI"
     }
 
     # Phase 4: Check Open WebUI logs if running
@@ -565,9 +567,142 @@ function Test-InstalledModels {
     return $passed -eq $models.Count
 }
 
+# Ensure SearXNG settings exist
+function New-SearXNGConfig {
+    $scriptDir = Split-Path -Parent $MyInvocation.ScriptName
+    if (-not $scriptDir) { $scriptDir = Get-Location }
+
+    $searxngDir = Join-Path $scriptDir "searxng"
+    $settingsPath = Join-Path $searxngDir "settings.yml"
+
+    # Only create if doesn't exist
+    if (Test-Path $settingsPath) {
+        return $true
+    }
+
+    New-Item -ItemType Directory -Path $searxngDir -Force | Out-Null
+
+    $secretKey = [guid]::NewGuid().ToString()
+    $searxngSettings = @"
+use_default_settings: true
+
+server:
+  secret_key: "$secretKey"
+  bind_address: "0.0.0.0"
+
+search:
+  safe_search: 0
+  autocomplete: "duckduckgo"
+  default_lang: "en"
+  formats:
+    - html
+    - json
+
+engines:
+  - name: duckduckgo
+    engine: duckduckgo
+    disabled: false
+  - name: google
+    engine: google
+    disabled: false
+  - name: bing
+    engine: bing
+    disabled: false
+  - name: brave
+    engine: brave
+    disabled: false
+  - name: wikipedia
+    engine: wikipedia
+    disabled: false
+  - name: github
+    engine: github
+    disabled: false
+  - name: stackoverflow
+    engine: stackoverflow
+    disabled: false
+"@
+    [System.IO.File]::WriteAllText($settingsPath, $searxngSettings)
+    Write-Success "Created searxng/settings.yml"
+    return $true
+}
+
+# Start SearXNG container (always used with Open WebUI)
+function Start-SearXNG {
+    Write-Info "Ensuring SearXNG is running..."
+
+    # Check if already running
+    $running = Invoke-Container @("ps", "--filter", "name=searxng", "--format", "{{.Names}}") 2>&1
+    if ($running -eq "searxng") {
+        Write-Success "SearXNG already running"
+        return $true
+    }
+
+    # Check if exists but stopped
+    $exists = Invoke-Container @("ps", "-a", "--filter", "name=searxng", "--format", "{{.Names}}") 2>&1
+    if ($exists -eq "searxng") {
+        Write-Info "Starting existing SearXNG container..."
+        Invoke-Container @("start", "searxng") | Out-Null
+        Start-Sleep -Seconds 3
+        Write-Success "SearXNG started"
+        return $true
+    }
+
+    # Create config if needed
+    New-SearXNGConfig | Out-Null
+
+    $scriptDir = Split-Path -Parent $MyInvocation.ScriptName
+    if (-not $scriptDir) { $scriptDir = Get-Location }
+
+    $searxngImage = Get-ImageRef -Name "searxng" -Tag "latest"
+    Write-Info "Pulling SearXNG image..."
+
+    # Run SearXNG container
+    $containerArgs = @(
+        "run", "-d",
+        "-p", "4000:8080",
+        "-v", "${scriptDir}/searxng:/etc/searxng",
+        "-e", "SEARXNG_BASE_URL=http://localhost:4000",
+        "--name", "searxng",
+        "--restart", "unless-stopped",
+        $searxngImage
+    )
+
+    try {
+        $result = Invoke-Container $containerArgs 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Err "Failed to start SearXNG: $result"
+            return $false
+        }
+
+        # Wait for SearXNG to be ready
+        Write-Info "Waiting for SearXNG to start..."
+        $attempts = 0
+        while ($attempts -lt 10) {
+            Start-Sleep -Seconds 2
+            try {
+                $null = Invoke-RestMethod -Uri "http://localhost:4000/config" -Method Get -TimeoutSec 3 -ErrorAction Stop
+                Write-Success "SearXNG is running at http://localhost:4000"
+                return $true
+            } catch {
+                $attempts++
+            }
+        }
+        Write-Warn "SearXNG started but not responding yet"
+        return $true
+    } catch {
+        Write-Err "SearXNG error: $_"
+        return $false
+    }
+}
+
 # Install Open WebUI
 function Install-OpenWebUI {
-    Write-Step "5" "Installing Open WebUI"
+    Write-Step "5" "Installing Open WebUI + SearXNG"
+
+    # Always start SearXNG first
+    if (-not (Start-SearXNG)) {
+        Write-Warn "SearXNG failed to start, continuing anyway..."
+    }
 
     # Check for NVIDIA GPU first (needed for tag selection)
     $hasGPU = $false
@@ -639,32 +774,17 @@ function Install-OpenWebUI {
     $ollamaUrl = Get-OllamaHostUrl
     Write-Info "Ollama URL: $ollamaUrl"
 
-    # Detect if SearXNG is available (from Perplexica stack)
-    $useSearxng = $false
-    $searxngContainer = Invoke-Container @("ps", "--filter", "name=searxng", "--format", "{{.Names}}") 2>&1
-    if ($searxngContainer -eq "searxng") {
-        $useSearxng = $true
-        Write-Info "SearXNG detected - using self-hosted search (no rate limits)"
-    } else {
-        Write-Info "SearXNG not found - using DuckDuckGo for web search"
-    }
+    # SearXNG is always started with Open WebUI (no fallback to external providers)
+    # SearXNG URL uses the same host as Ollama but different port
+    $searxngUrl = $ollamaUrl -replace ':11434', ':4000'
+    Write-Info "Using SearXNG at $searxngUrl for web search"
 
-    # Build web search env vars based on detection
-    if ($useSearxng) {
-        $searxngUrl = $ollamaUrl -replace ':11434', ':4000'
-        $webSearchArgs = @(
-            "-e", "ENABLE_RAG_WEB_SEARCH=true",
-            "-e", "RAG_WEB_SEARCH_ENGINE=searxng",
-            "-e", "SEARXNG_QUERY_URL=$searxngUrl",
-            "-e", "RAG_WEB_SEARCH_RESULT_COUNT=5"
-        )
-    } else {
-        $webSearchArgs = @(
-            "-e", "ENABLE_RAG_WEB_SEARCH=true",
-            "-e", "RAG_WEB_SEARCH_ENGINE=duckduckgo",
-            "-e", "RAG_WEB_SEARCH_RESULT_COUNT=5"
-        )
-    }
+    $webSearchArgs = @(
+        "-e", "ENABLE_RAG_WEB_SEARCH=true",
+        "-e", "RAG_WEB_SEARCH_ENGINE=searxng",
+        "-e", "SEARXNG_QUERY_URL=$searxngUrl",
+        "-e", "RAG_WEB_SEARCH_RESULT_COUNT=5"
+    )
 
     # Get persistent secret key for session management
     $secretKey = Get-WebUISecretKey
@@ -743,7 +863,7 @@ function Install-OpenWebUI {
         if ($SingleUser) {
             Write-Host "  Ready to use:" -ForegroundColor Yellow
             Write-Host "  - No login required (single-user mode)"
-            Write-Host "  - Web search pre-enabled with DuckDuckGo"
+            Write-Host "  - Web search pre-enabled with SearXNG"
             if ($defaultModels) {
                 Write-Host "  - Models pre-selected: $defaultModels"
             }
@@ -751,7 +871,7 @@ function Install-OpenWebUI {
             Write-Host "  First-time setup:" -ForegroundColor Yellow
             Write-Host "  1. Open http://localhost:3000"
             Write-Host "  2. Create an account (first user becomes admin)"
-            Write-Host "  3. Web search is pre-enabled with DuckDuckGo"
+            Write-Host "  3. Web search is pre-enabled with SearXNG"
         }
         Write-Host ""
         return $true
@@ -1091,16 +1211,18 @@ function Show-Complete {
         "OpenWebUI" {
             Write-Host "Open WebUI: " -NoNewline
             Write-Host "http://localhost:3000" -ForegroundColor Cyan
+            Write-Host "SearXNG:    " -NoNewline
+            Write-Host "http://localhost:4000" -ForegroundColor Cyan
             Write-Host ""
             if ($SingleUser) {
                 Write-Host "Ready to use! (single-user mode)" -ForegroundColor Green
                 Write-Host "  - No login required"
-                Write-Host "  - Web search pre-enabled"
+                Write-Host "  - Web search via SearXNG (multi-engine)"
             } else {
                 Write-Host "Quick Start:" -ForegroundColor Yellow
                 Write-Host "  1. Open http://localhost:3000"
                 Write-Host "  2. Create account (first user = admin)"
-                Write-Host "  3. Web search is pre-enabled"
+                Write-Host "  3. Web search via SearXNG (multi-engine)"
             }
         }
         "Perplexica" {

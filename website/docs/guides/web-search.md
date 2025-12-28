@@ -8,13 +8,12 @@ Enable AI-powered web search with your local Ollama models.
 
 ## Which Setup Should I Use?
 
-**This is the key question.** The main difference is how many search engines run at once:
+**Both setups use SearXNG** for multi-engine search - you always get the full experience:
 
-| Setup | Search Engines | How It Works |
-|-------|---------------|--------------|
-| **Open WebUI alone** | ONE at a time | Pick DuckDuckGo OR Google OR Brave in settings |
-| **Open WebUI + SearXNG** | ALL at once | SearXNG queries multiple engines simultaneously |
-| **Perplexica + SearXNG** | ALL at once | Always uses SearXNG (it's required) |
+| Setup | Interface | Best For |
+|-------|-----------|----------|
+| **Open WebUI** | ChatGPT-like chat | General chat with web search capability |
+| **Perplexica** | Perplexity-like research | AI research with inline citations |
 
 ### What is SearXNG?
 
@@ -34,10 +33,13 @@ SearXNG is a **meta-search engine** - it queries multiple search engines at once
 
 | Want This? | Install This | Containers |
 |------------|--------------|------------|
-| Simple chat + basic search | Open WebUI only | 1 |
-| Chat + comprehensive multi-engine search | Open WebUI + SearXNG | 2 |
-| AI research with citations (Perplexity-like) | Perplexica + SearXNG | 3 |
-| Everything | Both (share SearXNG) | 3 |
+| Chat + multi-engine web search | Open WebUI | 2 (Open WebUI + SearXNG) |
+| AI research with citations (Perplexity-like) | Perplexica | 3 (Perplexica + SearXNG) |
+| Everything | Both | 4 (share SearXNG) |
+
+:::note
+Open WebUI now always includes SearXNG for multi-engine search. There's no "basic search" option - you get the full experience by default.
+:::
 
 :::tip Key Insight
 If you install Perplexica, you get SearXNG automatically. Open WebUI can then use that same SearXNG instance for multi-engine search too!
@@ -56,10 +58,10 @@ LLMs have a knowledge cutoff date. Web search integration allows your local AI t
 | Feature | Open WebUI | Perplexica |
 |---------|------------|------------|
 | **Interface** | ChatGPT-like | Perplexity-like |
-| **Search engines** | One at a time (or SearXNG) | Always multi-engine via SearXNG |
-| **Privacy** | Depends on provider | 100% self-hosted |
-| **Setup complexity** | Single container | 3 containers |
-| **Best for** | General use | Privacy-focused research |
+| **Search engines** | Multi-engine via SearXNG | Multi-engine via SearXNG |
+| **Privacy** | 100% self-hosted | 100% self-hosted |
+| **Setup complexity** | 2 containers | 3 containers |
+| **Best for** | General chat | Privacy-focused research |
 | **Citations** | Basic source links | Numbered references throughout |
 
 ## Option 1: Open WebUI
@@ -97,20 +99,21 @@ Without `-SingleUser`:
 1. Create an account (first user becomes admin)
 2. Web search is **pre-configured** automatically
 
-### Web Search Auto-Detection
+### Web Search Configuration
 
-The setup script automatically detects the best search provider:
+Open WebUI always uses SearXNG for web search, which is automatically started alongside it:
 
-| Scenario | Search Engine | Notes |
-|----------|---------------|-------|
-| **Perplexica installed** | SearXNG | Self-hosted, no rate limits |
-| **OpenWebUI only** | DuckDuckGo | No setup needed, may have rate limits |
+| Component | Port | Description |
+|-----------|------|-------------|
+| Open WebUI | 3000 | Chat interface |
+| SearXNG | 4000 | Multi-engine search aggregator |
 
-To change providers later, go to **Settings → Admin Settings → Web Search**:
-- **SearXNG** - Self-hosted (if Perplexica running)
-- **DuckDuckGo** - No API key needed
-- **Google** - Requires API key
-- **Brave** - Requires API key (privacy-focused)
+This gives you:
+- **No rate limits** - Self-hosted search
+- **Multi-engine** - Queries DuckDuckGo, Google, Bing, Brave, etc. simultaneously
+- **Complete privacy** - All searches stay on your network
+
+To customize search engines, edit `searxng/settings.yml` after installation.
 
 ### Usage
 

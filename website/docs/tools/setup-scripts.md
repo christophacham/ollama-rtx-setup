@@ -126,12 +126,12 @@ Automatically detects Docker or Podman:
 
 ### Ports Used
 
-| Service | Port |
-|---------|------|
-| Open WebUI | 3000 |
-| Perplexica Frontend | 3002 |
-| Perplexica Backend | 3001 |
-| SearXNG | 4000 |
+| Service | Port | Notes |
+|---------|------|-------|
+| Open WebUI | 3000 | Chat interface |
+| SearXNG | 4000 | Always started with Open WebUI |
+| Perplexica Frontend | 3002 | (if installed) |
+| Perplexica Backend | 3001 | (if installed) |
 
 ## setup-uncensored-models.ps1
 

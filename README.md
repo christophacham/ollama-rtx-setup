@@ -162,20 +162,22 @@ Adds web search capabilities with optimized models and integrated testing:
 
 ### Option 1: Open WebUI (Recommended)
 
-Beautiful ChatGPT-like interface with built-in web search.
+Beautiful ChatGPT-like interface with SearXNG multi-engine search.
 
 ```powershell
 # Or use docker-compose directly
 docker-compose -f docker-compose-openwebui.yml --profile gpu up -d
 ```
 
-Access at: http://localhost:3000
+Access at:
+- Open WebUI: http://localhost:3000
+- SearXNG: http://localhost:4000
 
 **Features:**
-- 15+ search providers (DuckDuckGo, Google, Brave, etc.)
+- Multi-engine search via SearXNG (DuckDuckGo, Google, Brave, etc.)
 - RAG (Retrieval Augmented Generation)
 - Beautiful modern UI
-- Single container setup
+- Self-hosted, no rate limits
 
 ### Option 2: Perplexica (Full Privacy)
 
