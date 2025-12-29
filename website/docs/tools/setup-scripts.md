@@ -12,6 +12,8 @@ PowerShell scripts for automated setup and management.
 |--------|---------|
 | `setup-ollama.ps1` | Main Ollama installation and model setup |
 | `setup-ollama-websearch.ps1` | Web search integration (Open WebUI, Perplexica) |
+| `optimize-ollama-5090.ps1` | Ensure models run 100% on GPU, cleanup duplicates |
+| `update-pal-config.ps1` | Sync PAL MCP config with Ollama models |
 | `setup-uncensored-models.ps1` | Download uncensored/unfiltered models |
 | `limit-ollama-bandwidth.ps1` | Limit download bandwidth (requires Admin) |
 | `scan-ollama-models.ps1` | Scan Ollama library for new coder models |
@@ -153,6 +155,309 @@ Automatically detects Docker or Podman:
 | SearXNG | 4000 | Always started with Open WebUI |
 | Perplexica Frontend | 3002 | (if installed) |
 | Perplexica Backend | 3001 | (if installed) |
+
+## optimize-ollama-5090.ps1
+
+Ensures Ollama models run 100% on GPU with 0% CPU offloading. Optimized for RTX 5090 (32GB VRAM). Also includes cleanup to remove duplicate models.
+
+### The Problem
+
+Large models with default context windows overflow VRAM, causing CPU offloading:
+
+```
+ollama ps
+NAME              ID            SIZE     PROCESSOR        UNTIL
+deepseek-r1:32b   6e4c38e2f...  67 GB    61%/39% CPU/GPU  4 minutes from now
+```
+
+The "61%/39% CPU/GPU" means 61% of model layers are on CPU - slow!
+
+### Usage
+
+```powershell
+# Optimize all installed models
+.\optimize-ollama-5090.ps1
+
+# Optimize a specific model
+.\optimize-ollama-5090.ps1 -Model "deepseek-r1:32b"
+
+# Show optimization status
+.\optimize-ollama-5090.ps1 -List
+
+# Remove all -5090 variants
+.\optimize-ollama-5090.ps1 -Undo
+
+# Override context size
+.\optimize-ollama-5090.ps1 -ContextSize 32768
+
+# Force re-optimize even if variant exists
+.\optimize-ollama-5090.ps1 -Force
+
+# Delete original models where -5090 variant exists (saves 100GB+)
+.\optimize-ollama-5090.ps1 -Cleanup
+
+# Auto-delete without prompting
+.\optimize-ollama-5090.ps1 -Cleanup -NoPrompt
+
+# Delete original immediately after each optimization
+.\optimize-ollama-5090.ps1 -DeleteOriginal
+```
+
+### Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `-Model` | Optimize a specific model instead of all |
+| `-List` | Show optimization status without changes |
+| `-Undo` | Remove all -5090 variants |
+| `-Cleanup` | Delete originals where -5090 exists |
+| `-DeleteOriginal` | Delete original after each successful optimization |
+| `-NoPrompt` | Skip confirmation prompts (auto-yes) |
+| `-ContextSize` | Override auto-calculated context size |
+| `-Force` | Re-optimize even if variant exists |
+
+### How It Works
+
+1. **Test Each Model**: Loads model with a simple prompt, checks `ollama ps`
+2. **Detect CPU Usage**: Parses processor column for CPU/GPU split
+3. **Create Variant**: If CPU > 0%, creates `<model>-5090` variant with:
+   - `num_gpu 99` - force all layers to GPU
+   - Calculated `num_ctx` - reduced context to fit in VRAM
+4. **Verify**: Re-tests the new variant to confirm 100% GPU
+5. **Track**: Saves results to `5090-optimized.json`
+
+### Context Size by Model
+
+| Model Size | num_ctx | Reasoning |
+|------------|---------|-----------|
+| < 10GB | 65536 | Plenty of headroom |
+| 10-15GB | 32768 | Good balance |
+| 15-20GB | 16384 | Tight fit, prioritize GPU |
+| > 20GB | 8192 | Minimal context, full GPU |
+
+### Example Output
+
+```
+============================================================
+  Ollama GPU Optimizer for RTX 5090 (32GB VRAM)
+============================================================
+
+[INFO] Detected GPU with 32GB VRAM
+[INFO] Found 15 model(s) to test
+
+Testing deepseek-r1:32b (19GB)...
+  Loading model...
+  CPU: 61% / GPU: 39% - NEEDS OPTIMIZATION
+  Creating deepseek-r1:32b-5090 with num_ctx=16384, num_gpu=99
+  Re-test: CPU: 0% / GPU: 100% - OK
+
+Testing qwen3:32b (20GB)...
+  Loading model...
+  CPU: 0% / GPU: 100% - ALREADY OPTIMIZED
+
+============================================================
+  Summary
+============================================================
+
+  Tested:            15 model(s)
+  Newly optimized:   8
+  Already optimized: 7
+
+[OK] Created 8 optimized variant(s)
+
+Usage:
+  ollama run <model>-5090
+  Example: ollama run deepseek-r1:32b-5090
+```
+
+### Using Optimized Models
+
+After optimization, use the `-5090` variants:
+
+```powershell
+# Instead of:
+ollama run deepseek-r1:32b
+
+# Use:
+ollama run deepseek-r1:32b-5090
+```
+
+:::tip Recommended
+Run this script after installing new models to ensure they're optimized for your GPU.
+:::
+
+### Cleanup Duplicate Models
+
+After optimization, you have both the original and the `-5090` variant. The cleanup feature helps you reclaim storage:
+
+```powershell
+# See what can be cleaned up
+.\optimize-ollama-5090.ps1 -List
+
+# Delete originals where -5090 exists
+.\optimize-ollama-5090.ps1 -Cleanup
+```
+
+**Example output:**
+
+```
+Found 10 base model(s) with existing -5090 variants:
+
+  qwen3-coder:30b                             18 GB
+  nemotron-3-nano:30b                         24 GB
+  deepseek-r1:32b                             19 GB
+  qwen2.5-coder:32b                           19 GB
+  ...
+
+Total space to free: 147.4 GB
+
+Delete these 10 original model(s)? [y/N]
+```
+
+:::warning
+Once deleted, originals cannot be recovered. You'll need to re-download them if needed. The `-5090` variants work identically but with optimized settings.
+:::
+
+## update-pal-config.ps1
+
+Synchronizes your [PAL MCP Server](https://github.com/BeehiveInnovations/pal-mcp-server) configuration with locally installed Ollama models. PAL is an AI orchestration tool that provides advanced capabilities like multi-model consensus, deep thinking, and systematic code review.
+
+### Why Use This Script
+
+When you install or optimize Ollama models, PAL doesn't automatically know about them. This script:
+
+1. **Discovers your models** - Scans `ollama list` for all installed models
+2. **Sets capabilities** - Marks reasoning models with `supports_extended_thinking`
+3. **Ranks models** - Assigns `intelligence_score` for model selection
+4. **Creates aliases** - Short names like `r1` → `deepseek-r1:32b-5090`
+5. **Recommends tools** - Shows which models work best for which PAL tools
+
+### Usage
+
+```powershell
+# Compare current PAL config vs installed models (dry-run)
+.\update-pal-config.ps1 -List
+
+# Update PAL config (prompts for confirmation)
+.\update-pal-config.ps1
+
+# Prefer -5090 optimized variants (recommended)
+.\update-pal-config.ps1 -Prefer5090
+
+# Auto-update without prompting
+.\update-pal-config.ps1 -Prefer5090 -NoPrompt
+
+# Specify custom PAL config path
+.\update-pal-config.ps1 -PalConfigPath "D:\pal-mcp-server\conf\custom_models.json"
+```
+
+### Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `-List` | Compare config vs installed models without changes |
+| `-Prefer5090` | Only include -5090 variants when both exist |
+| `-NoPrompt` | Skip confirmation prompts |
+| `-PalConfigPath` | Custom path to custom_models.json |
+
+### Example Output
+
+```
+============================================================
+  PAL MCP Server Config Updater
+============================================================
+
+[INFO] PAL config: C:\Users\...\pal-mcp-server\conf\custom_models.json
+[INFO] Found 26 Ollama model(s)
+
+======================================================================
+  PAL Config vs Ollama Models Comparison
+======================================================================
+
+Models in Ollama NOT in PAL config:
+  + deepseek-r1:32b-5090 [5090]
+  + qwen2.5-coder:32b-5090 [5090]
+  + qwen3:32b-5090 [5090]
+  ...
+
+======================================================================
+  Recommended Models for PAL Tools
+======================================================================
+
+THINKDEEP / CHALLENGE (reasoning, extended thinking):
+  * deepseek-r1:32b-5090 (score: 18)
+    qwen3:32b-5090 (score: 17)
+    qwen3-coder:30b-5090 (score: 17)
+
+CONSENSUS (multi-model debate, diverse perspectives):
+  Suggested consensus panel:
+    - deepseek-r1:32b-5090 (for)
+    - qwen2.5-coder:32b-5090 (against)
+    - qwen3:32b-5090 (neutral)
+
+CODEREVIEW / DEBUG / REFACTOR (coding analysis):
+  * qwen2.5-coder:32b-5090 (score: 18)
+    qwen2.5-coder:14b (score: 18)
+    qwen3-coder:30b-5090 (score: 17)
+
+CHAT / QUICK QUERIES (fast responses):
+  * llama3.1:8b-5090
+  * mistral:7b
+  * qwen2.5:3b
+
+* = recommended for this tool category
+```
+
+### Model Capabilities Set
+
+The script sets these fields based on model type:
+
+| Model Pattern | `supports_extended_thinking` | `intelligence_score` |
+|---------------|------------------------------|----------------------|
+| deepseek-r1 | ✅ true | 18 |
+| qwen3 | ✅ true | 17 |
+| nemotron | ✅ true | 16 |
+| phi4 | ✅ true | 16 |
+| qwen2.5-coder | ❌ false | 18 |
+| devstral | ❌ false | 16-17 |
+| llama3.1:8b | ❌ false | 12 |
+| mistral:7b | ❌ false | 10 |
+
+### Tool Recommendations
+
+| PAL Tool | Best For | Recommended Models |
+|----------|----------|-------------------|
+| **thinkdeep** | Deep reasoning, complex analysis | deepseek-r1, qwen3, nemotron |
+| **challenge** | Question assumptions, find flaws | deepseek-r1, qwen3 |
+| **consensus** | Multi-model debate | Mix of reasoning + coding |
+| **codereview** | Systematic code analysis | qwen2.5-coder, devstral |
+| **debug** | Root cause investigation | qwen2.5-coder, deepseek-r1 |
+| **refactor** | Code improvement | qwen2.5-coder, qwen3-coder |
+| **chat** | Quick queries | llama3.1:8b, mistral:7b |
+
+### Workflow
+
+Typical workflow after installing new models:
+
+```powershell
+# 1. Download new models
+ollama pull qwen3-coder:30b
+
+# 2. Optimize for GPU
+.\optimize-ollama-5090.ps1 -Model "qwen3-coder:30b"
+
+# 3. Clean up original
+.\optimize-ollama-5090.ps1 -Cleanup
+
+# 4. Update PAL config
+.\update-pal-config.ps1 -Prefer5090
+
+# 5. Restart Claude Desktop to apply
+```
+
+:::tip
+Use `-Prefer5090` to ensure PAL uses your GPU-optimized variants instead of the originals.
+:::
 
 ## limit-ollama-bandwidth.ps1
 

@@ -194,6 +194,75 @@ Adds web search capabilities with optimized models and integrated testing:
 - Runs automated inference & web search testing
 - Pre-configures Open WebUI with web search enabled
 
+### `optimize-ollama-5090.ps1`
+
+Ensures models run 100% on GPU (0% CPU offloading) for RTX 5090:
+
+```powershell
+.\optimize-ollama-5090.ps1              # Optimize all installed models
+.\optimize-ollama-5090.ps1 -Model "deepseek-r1:32b"  # Optimize specific model
+.\optimize-ollama-5090.ps1 -List        # Show optimization status
+.\optimize-ollama-5090.ps1 -Undo        # Remove -5090 variants
+.\optimize-ollama-5090.ps1 -Cleanup     # Delete originals where -5090 exists (saves 100GB+)
+.\optimize-ollama-5090.ps1 -DeleteOriginal  # Delete original after each optimization
+```
+
+**How it works:**
+1. Tests each installed model by loading it and checking `ollama ps`
+2. If CPU usage detected (e.g., "61%/39% CPU/GPU"), creates optimized `-5090` variant
+3. Optimized variants use `num_gpu 99` (force all layers to GPU) and calculated `num_ctx`
+
+**Cleanup duplicate models:**
+
+After optimization, you have both `model:32b` and `model:32b-5090`. The `-Cleanup` flag finds these duplicates and deletes the originals:
+
+```powershell
+.\optimize-ollama-5090.ps1 -Cleanup     # Interactive - asks before deleting
+.\optimize-ollama-5090.ps1 -Cleanup -NoPrompt  # Auto-delete without asking
+```
+
+**Context size by model:**
+| Model Size | num_ctx | Reasoning |
+|------------|---------|-----------|
+| < 10GB | 65536 | Plenty of headroom |
+| 10-15GB | 32768 | Good balance |
+| 15-20GB | 16384 | Tight fit, prioritize GPU |
+| > 20GB | 8192 | Minimal context, full GPU |
+
+**Usage:** After running, use the optimized variants:
+```powershell
+ollama run deepseek-r1:32b-5090   # Instead of deepseek-r1:32b
+ollama run qwen3:32b-5090         # Instead of qwen3:32b
+```
+
+### `update-pal-config.ps1`
+
+Syncs [PAL MCP Server](https://github.com/BeehiveInnovations/pal-mcp-server) configuration with your local Ollama models:
+
+```powershell
+.\update-pal-config.ps1              # Update PAL config (prompts first)
+.\update-pal-config.ps1 -List        # Compare config vs installed models
+.\update-pal-config.ps1 -Prefer5090  # Only use -5090 optimized variants
+.\update-pal-config.ps1 -NoPrompt    # Auto-update without asking
+```
+
+**What it does:**
+1. Scans your installed Ollama models
+2. Updates PAL's `custom_models.json` with proper metadata
+3. Sets `supports_extended_thinking` for reasoning models (deepseek-r1, qwen3)
+4. Assigns `intelligence_score` for model ranking
+5. Creates aliases (e.g., `r1` → `deepseek-r1:32b-5090`)
+6. Shows **recommended models per PAL tool**
+
+**Tool recommendations:**
+
+| PAL Tool | Best Models | Why |
+|----------|-------------|-----|
+| **thinkdeep / challenge** | deepseek-r1, qwen3, nemotron | Extended thinking, chain-of-thought |
+| **consensus** | Mix of reasoning + coding | Diverse perspectives for debate |
+| **codereview / debug** | qwen2.5-coder, devstral, codexor | Coding-specialized |
+| **chat** | llama3.1:8b, mistral:7b | Fast responses |
+
 ## Web Search Options
 
 ### Option 1: Open WebUI (Recommended)
@@ -288,6 +357,8 @@ $env:OLLAMA_HOST = "0.0.0.0"
 |------|-------------|
 | `setup-ollama.ps1` | Main Ollama setup script |
 | `setup-uncensored-models.ps1` | Uncensored models installer |
+| `optimize-ollama-5090.ps1` | GPU optimizer - ensures 100% GPU usage, cleanup duplicates |
+| `update-pal-config.ps1` | Sync PAL MCP config with Ollama models |
 | `limit-ollama-bandwidth.ps1` | Bandwidth limiter for downloads (requires Admin) |
 | `scan-ollama-models.ps1` | Scan Ollama library for new coder models |
 | `backup-ollama-models.ps1` | Backup/restore models to external storage |
@@ -296,52 +367,65 @@ $env:OLLAMA_HOST = "0.0.0.0"
 | `docker-compose-perplexica.yml` | Perplexica + SearXNG Docker config |
 | `custom_models.json` | Model configurations for PAL MCP (see below) |
 
-## PAL MCP Integration (custom_models.json)
+## PAL MCP Integration
 
-The `custom_models.json` file configures local Ollama models for use with [PAL MCP Server](https://github.com/BeehiveInnovations/pal-mcp-server).
+[PAL MCP Server](https://github.com/BeehiveInnovations/pal-mcp-server) is an AI orchestration tool that uses your local Ollama models for tasks like code review, debugging, and deep analysis. This repo includes scripts to configure it automatically.
 
-### Usage
-
-Copy to your PAL MCP server's `conf/` directory:
+### Quick Setup
 
 ```powershell
-# Copy to PAL MCP config
-Copy-Item custom_models.json "C:\path\to\pal-mcp-server\conf\"
+# 1. Optimize your models for RTX 5090
+.\optimize-ollama-5090.ps1
+
+# 2. Clean up duplicate models (saves 100GB+)
+.\optimize-ollama-5090.ps1 -Cleanup
+
+# 3. Sync PAL config with your Ollama models
+.\update-pal-config.ps1 -Prefer5090
+
+# 4. Restart Claude Desktop to apply changes
 ```
 
-### Model Categories
+### What Gets Configured
 
-| Category | Description | Example Models |
-|----------|-------------|----------------|
-| `coder` | Coding-focused models | qwen2.5-coder:32b, devstral-small-2 |
-| `reasoning` | Extended thinking/CoT | deepseek-r1:32b, qwen3:32b, phi4:14b |
-| `general` | General purpose | gemma3:27b, llama3.1:8b, mistral:7b |
-| `uncensored` | No content filters | dolphin3:8b, dolphin-mistral:7b |
-| `community` | Community finetunes | mikepfunk28/deepseekq3_coder |
+The `update-pal-config.ps1` script creates `custom_models.json` with:
+
+| Field | What It Does |
+|-------|--------------|
+| `supports_extended_thinking` | Enables **thinkdeep** tool for reasoning models |
+| `intelligence_score` | Ranks models for **consensus** multi-model debates |
+| `aliases` | Short names like `r1` → `deepseek-r1:32b-5090` |
+| `[5090 Optimized]` tag | Marks GPU-optimized variants in descriptions |
+
+### Which Model for Which Tool
+
+| PAL Tool | Best Local Models | What It Does |
+|----------|-------------------|--------------|
+| **thinkdeep** | deepseek-r1, qwen3, nemotron | Deep reasoning with chain-of-thought |
+| **challenge** | deepseek-r1, qwen3 | Question assumptions, find flaws |
+| **consensus** | Mix: reasoning + coding + general | Multi-model debate for decisions |
+| **codereview** | qwen2.5-coder, devstral, codexor | Systematic code analysis |
+| **debug** | qwen2.5-coder, deepseek-r1 | Root cause investigation |
+| **refactor** | qwen2.5-coder, qwen3-coder | Code improvement suggestions |
+| **chat** | llama3.1:8b, mistral:7b | Fast general queries |
 
 ### Model Aliases
 
-Each model has short aliases for easy reference in PAL:
+Use short names in PAL prompts:
 
 ```
-"Use qwen-coder to review this code"     # → qwen2.5-coder:32b
-"Use deepseek to debug this"             # → deepseek-r1:32b
-"Use dscoder for this task"              # → mikepfunk28/deepseekq3_coder
+"Use r1 to analyze this"           # → deepseek-r1:32b-5090
+"Use coder to review this"         # → qwen2.5-coder:32b-5090
+"Use reasoning for this problem"   # → deepseek-r1:32b-5090
 ```
 
-### Fields Reference
+### Manual Setup
 
-| Field | Description |
-|-------|-------------|
-| `model_name` | Ollama model name (e.g., `qwen2.5-coder:32b`) |
-| `aliases` | Short names for the model (case-insensitive) |
-| `context_window` | Max input tokens |
-| `max_output_tokens` | Max response tokens |
-| `supports_extended_thinking` | Has chain-of-thought reasoning |
-| `supports_json_mode` | Can output structured JSON |
-| `supports_function_calling` | Has tool/function calling |
-| `intelligence_score` | Relative capability (1-20) |
-| `category` | Model category for organization |
+If you prefer manual configuration, copy `custom_models.json` to PAL:
+
+```powershell
+Copy-Item custom_models.json "C:\path\to\pal-mcp-server\conf\"
+```
 
 ## Requirements
 
