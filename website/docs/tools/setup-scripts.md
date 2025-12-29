@@ -13,6 +13,7 @@ PowerShell scripts for automated setup and management.
 | `setup-ollama.ps1` | Main Ollama installation and model setup |
 | `setup-ollama-websearch.ps1` | Web search integration (Open WebUI, Perplexica) |
 | `setup-uncensored-models.ps1` | Download uncensored/unfiltered models |
+| `limit-ollama-bandwidth.ps1` | Limit download bandwidth (requires Admin) |
 | `backup-ollama-models.ps1` | Backup/restore models to external storage |
 | `debug-ollama-connection.ps1` | Diagnose container connectivity issues |
 | `test-ollama-stack.ps1` | Test suite for verifying setup |
@@ -151,6 +152,60 @@ Automatically detects Docker or Podman:
 | SearXNG | 4000 | Always started with Open WebUI |
 | Perplexica Frontend | 3002 | (if installed) |
 | Perplexica Backend | 3001 | (if installed) |
+
+## limit-ollama-bandwidth.ps1
+
+Limits Ollama download bandwidth to prevent network saturation. **Requires Administrator privileges.**
+
+### Usage
+
+```powershell
+# Interactive menu (prompts for action)
+.\limit-ollama-bandwidth.ps1
+
+# Limit to 50% of tested speed
+.\limit-ollama-bandwidth.ps1 -Limit
+
+# Limit to 30% of tested speed
+.\limit-ollama-bandwidth.ps1 -Limit -Percent 30
+
+# Remove bandwidth limit
+.\limit-ollama-bandwidth.ps1 -Unlimit
+
+# Skip speed test, use manual value
+.\limit-ollama-bandwidth.ps1 -Limit -SkipSpeedTest -SpeedMbps 100
+```
+
+### How It Works
+
+1. **Speed Test**: Downloads a test file to measure your connection speed
+2. **Calculate Limit**: Computes the target bandwidth (default: 50%)
+3. **Apply QoS Policy**: Creates a Windows QoS policy to throttle `ollama.exe`
+4. **Cleanup**: Use `-Unlimit` to remove the policy when done
+
+### Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `-Limit` | Enable bandwidth limiting |
+| `-Unlimit` | Remove bandwidth limiting |
+| `-Percent` | Percentage of bandwidth to allow (default: 50) |
+| `-SkipSpeedTest` | Skip speed test, use `-SpeedMbps` value |
+| `-SpeedMbps` | Manual speed in Mbps (use with `-SkipSpeedTest`) |
+
+:::tip Recommended Workflow
+1. Run `-Limit` before downloading large models
+2. Run your `setup-ollama.ps1 -AllModels` or `ollama pull` commands
+3. Run `-Unlimit` when downloads are complete
+:::
+
+:::note Alternative
+If you don't have Admin rights, set the environment variable instead:
+```powershell
+$env:OLLAMA_DOWNLOAD_CONN = 1
+```
+This limits to a single download connection (fair share with other traffic).
+:::
 
 ## setup-uncensored-models.ps1
 

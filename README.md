@@ -132,6 +132,30 @@ Downloads uncensored models (requires Ollama already installed):
 .\setup-uncensored-models.ps1 -Help            # Show options
 ```
 
+### `limit-ollama-bandwidth.ps1`
+
+Limit Ollama download bandwidth to prevent network saturation (requires Admin):
+
+```powershell
+# Interactive menu
+.\limit-ollama-bandwidth.ps1
+
+# Limit to 50% of tested speed
+.\limit-ollama-bandwidth.ps1 -Limit
+
+# Limit to 30% of tested speed
+.\limit-ollama-bandwidth.ps1 -Limit -Percent 30
+
+# Remove bandwidth limit
+.\limit-ollama-bandwidth.ps1 -Unlimit
+```
+
+**Features:**
+- Tests your download speed automatically
+- Uses Windows QoS policies to throttle `ollama.exe`
+- Easy enable/disable with `-Limit` and `-Unlimit`
+- Interactive menu if run without flags
+
 ### `backup-ollama-models.ps1`
 
 Backup and restore your Ollama models to/from external storage:
@@ -262,6 +286,7 @@ $env:OLLAMA_HOST = "0.0.0.0"
 |------|-------------|
 | `setup-ollama.ps1` | Main Ollama setup script |
 | `setup-uncensored-models.ps1` | Uncensored models installer |
+| `limit-ollama-bandwidth.ps1` | Bandwidth limiter for downloads (requires Admin) |
 | `backup-ollama-models.ps1` | Backup/restore models to external storage |
 | `setup-ollama-websearch.ps1` | Web search setup script |
 | `docker-compose-openwebui.yml` | Open WebUI Docker config |

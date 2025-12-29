@@ -87,6 +87,7 @@ See [Web Search Integration](/guides/web-search) to understand the difference.
 ### Management Tools
 - **ollama-manager** - Terminal UI for loading/unloading models
 - **Backup/restore scripts** - Move your models between machines
+- **Bandwidth limiter** - Prevent network saturation during large downloads
 - **Container image mirroring** - Self-hosted container registry
 
 ## Hardware Requirements
