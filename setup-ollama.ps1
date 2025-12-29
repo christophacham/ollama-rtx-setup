@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Ollama Setup Script for PAL MCP Server
     Optimized for NVIDIA RTX 5090 (32GB VRAM)
@@ -63,7 +63,7 @@ Options:
 Examples:
     .\setup-ollama.ps1                    # Smart setup (skips existing)
     .\setup-ollama.ps1 -MinimalModels     # Quick setup with one model
-    .\setup-ollama.ps1 -AllModels         # Download all 7 recommended models
+    .\setup-ollama.ps1 -AllModels         # Download all 10 recommended models
     .\setup-ollama.ps1 -ForceDownload     # Re-download all models
     .\setup-ollama.ps1 -SkipModels        # Configure only, no downloads
 
@@ -269,6 +269,9 @@ function Install-Models {
     )
 
     $extraModels = @(
+        @{ Name = "devstral-small-2"; Desc = "384K context, vision, 65.8% SWE-Bench"; Size = "~15GB" },
+        @{ Name = "qwen3-coder:30b"; Desc = "256K MoE, rivals Claude Sonnet-4"; Size = "~19GB" },
+        @{ Name = "devstral"; Desc = "Agentic coding, 46.8% SWE-Bench"; Size = "~14GB" },
         @{ Name = "phi4:14b"; Desc = "Microsoft's efficient reasoning (rivals 70B)"; Size = "~9GB" },
         @{ Name = "gemma3:27b"; Desc = "Google's latest (outperforms 405B)"; Size = "~16GB" },
         @{ Name = "codellama:34b"; Desc = "Meta's premier coding model"; Size = "~20GB" },
@@ -281,7 +284,7 @@ function Install-Models {
         Write-Info "Minimal mode: Targeting qwen2.5-coder:32b only"
     } elseif ($All) {
         $targetModels = $coreModels + $extraModels
-        Write-Info "Full mode: Targeting all 7 recommended models"
+        Write-Info "Full mode: Targeting all 10 recommended models"
     } else {
         $targetModels = $coreModels
         Write-Info "Standard mode: Targeting 3 core models"

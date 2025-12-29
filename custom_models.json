@@ -7,6 +7,72 @@
   },
   "models": [
     {
+      "model_name": "devstral-small-2",
+      "aliases": ["devstral2", "agentic", "long-context", "384k"],
+      "context_window": 393216,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "description": "Devstral Small 2 - 384K context, vision, 65.8% SWE-Bench (~15GB VRAM)",
+      "intelligence_score": 18
+    },
+    {
+      "model_name": "qwen3-coder:30b",
+      "aliases": ["qwen3-coder", "coder-256k", "agentic-coder"],
+      "context_window": 262144,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "description": "Qwen3 Coder 30B MoE (3.3B active) - 256K context, rivals Claude Sonnet-4 (~19GB VRAM)",
+      "intelligence_score": 18
+    },
+    {
+      "model_name": "devstral",
+      "aliases": ["devstral-v1", "swe-agent"],
+      "context_window": 131072,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "description": "Devstral 24B - Agentic coding, 46.8% SWE-Bench, Apache 2.0 (~14GB VRAM)",
+      "intelligence_score": 17
+    },
+    {
+      "model_name": "qwen2.5:3b",
+      "aliases": ["fast", "search", "qwen-fast"],
+      "context_window": 32768,
+      "max_output_tokens": 8192,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "description": "Qwen 2.5 3B - Fast model for web search queries (~4GB VRAM)",
+      "intelligence_score": 10
+    },
+    {
+      "model_name": "qwen2.5-coder:14b",
+      "aliases": ["synthesis", "medium", "qwen-coder-14b", "code-medium"],
+      "context_window": 131072,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "description": "Qwen 2.5 Coder 14B - Synthesis and code generation (~17GB VRAM)",
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "qwen2.5:14b",
+      "aliases": ["qwen-14b", "qwen-medium"],
+      "context_window": 131072,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "description": "Qwen 2.5 14B - General purpose medium model (~8GB VRAM)",
+      "intelligence_score": 15
+    },
+    {
       "model_name": "qwen2.5-coder:32b",
       "aliases": ["qwen-coder", "qwen-code", "coder"],
       "context_window": 131072,
