@@ -21,7 +21,7 @@
     {
       "supports_json_mode": true,
       "max_image_size_mb": 0.0,
-      "description": "CodeXor 20B - GPT-OSS based, zero-omission philosophy, anti-hallucination",
+      "description": "CodeXor 20B - OpenAI GPT-OSS base, zero-omission (no lazy placeholders), matches o3-mini on coding",
       "supports_images": false,
       "context_window": 131072,
       "supports_extended_thinking": false,
@@ -39,7 +39,7 @@
     {
       "supports_json_mode": true,
       "max_image_size_mb": 20.0,
-      "description": "CodeXor 12B - Gemma 3 based with VISION, can analyze screenshots/diagrams",
+      "description": "CodeXor 12B - Gemma 3 base with VISION capability, analyzes screenshots/diagrams/UI mockups",
       "supports_images": true,
       "context_window": 131072,
       "supports_extended_thinking": false,

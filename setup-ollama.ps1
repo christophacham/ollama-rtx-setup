@@ -284,8 +284,8 @@ function Install-Models {
     $coderModels = @(
         @{ Name = "qwen2.5-coder:32b"; Desc = "Best local coding model (rivals GPT-4o)"; Size = "~19GB" },
         @{ Name = "qwen3-coder:30b"; Desc = "256K MoE, rivals Claude Sonnet-4"; Size = "~19GB" },
-        @{ Name = "NeuralNexusLab/CodeXor:20b"; Desc = "GPT-OSS based, zero-omission, 128K ctx"; Size = "~14GB" },
-        @{ Name = "NeuralNexusLab/CodeXor:12b"; Desc = "Gemma 3 + VISION, 128K ctx"; Size = "~9GB" },
+        @{ Name = "NeuralNexusLab/CodeXor:20b"; Desc = "GPT-OSS base, zero-omission (no placeholders), matches o3-mini"; Size = "~14GB" },
+        @{ Name = "NeuralNexusLab/CodeXor:12b"; Desc = "Gemma 3 + VISION, analyzes screenshots/diagrams"; Size = "~9GB" },
         @{ Name = "devstral-small-2"; Desc = "384K context, vision, 65.8% SWE-Bench"; Size = "~15GB" },
         @{ Name = "devstral"; Desc = "Agentic coding, 46.8% SWE-Bench"; Size = "~14GB" },
         @{ Name = "mikepfunk28/deepseekq3_coder"; Desc = "DeepSeek Q3 + Qwen3 thinking"; Size = "~5GB" },
