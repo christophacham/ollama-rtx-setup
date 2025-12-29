@@ -317,8 +317,8 @@ function Install-Models {
         $targetModels = $coderModels
         Write-Info "Coder mode: Targeting 10 coding-focused models"
     } elseif ($All) {
-        $targetModels = $coreModels + $extraModels
-        Write-Info "Full mode: Targeting all recommended models"
+        $targetModels = $coreModels + $extraModels + $coderModels
+        Write-Info "Full mode: Targeting all recommended models (including coder models)"
     } else {
         $targetModels = $coreModels
         Write-Info "Standard mode: Targeting 3 core models"
