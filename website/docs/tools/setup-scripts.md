@@ -30,11 +30,14 @@ The main setup script for Ollama and models.
 # Default: Install Ollama + recommended models
 .\setup-ollama.ps1
 
-# Minimal models only (7-8B)
+# Minimal models only (qwen2.5-coder:32b)
 .\setup-ollama.ps1 -MinimalModels
 
-# All recommended models
+# All recommended models (including community finetunes)
 .\setup-ollama.ps1 -AllModels
+
+# Coding-focused models only (10 models)
+.\setup-ollama.ps1 -CoderModels
 
 # Skip model downloads
 .\setup-ollama.ps1 -SkipModels
@@ -42,6 +45,23 @@ The main setup script for Ollama and models.
 # List available models without installing
 .\setup-ollama.ps1 -ListModels
 ```
+
+### Coder Models (-CoderModels)
+
+The `-CoderModels` flag installs 10 coding-focused models:
+
+| Model | Size | Description |
+|-------|------|-------------|
+| qwen2.5-coder:32b | ~19GB | Best local coding model |
+| qwen3-coder:30b | ~19GB | 256K context MoE |
+| devstral-small-2 | ~15GB | 384K context, 65.8% SWE-Bench |
+| devstral | ~14GB | Agentic coding |
+| mikepfunk28/deepseekq3_coder | ~5GB | DeepSeek + Qwen3 thinking |
+| mikepfunk28/deepseekq3_agent | ~5GB | Agent-focused with tools |
+| second_constantine/deepseek-coder-v2:16b | ~9GB | 160K MoE coder |
+| qwen2.5-coder:14b | ~9GB | Efficient coding |
+| deepseek-coder:33b | ~19GB | 87 language support |
+| codellama:34b | ~20GB | Meta's coding model |
 
 ### What It Does
 

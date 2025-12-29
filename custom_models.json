@@ -3,19 +3,27 @@
     "description": "Model configurations optimized for NVIDIA RTX 5090 (32GB VRAM)",
     "usage": "Copy to your MCP server's conf/ directory or use as reference",
     "hardware_target": "NVIDIA RTX 5090 (32GB GDDR7) and similar GPUs",
-    "last_updated": "December 2025"
+    "last_updated": "December 2025",
+    "categories": {
+      "coder": "Coding-focused models for development tasks",
+      "reasoning": "Models with extended thinking/chain-of-thought",
+      "general": "General purpose models",
+      "uncensored": "Models without content restrictions",
+      "community": "Community finetunes from Ollama library"
+    }
   },
   "models": [
     {
-      "model_name": "devstral-small-2",
-      "aliases": ["devstral2", "agentic", "long-context", "384k"],
-      "context_window": 393216,
+      "model_name": "qwen2.5-coder:32b",
+      "aliases": ["qwen-coder", "qwen-code", "coder", "qwen25-coder-32b"],
+      "context_window": 131072,
       "max_output_tokens": 32768,
       "supports_extended_thinking": false,
       "supports_json_mode": true,
-      "supports_function_calling": true,
-      "description": "Devstral Small 2 - 384K context, vision, 65.8% SWE-Bench (~15GB VRAM)",
-      "intelligence_score": 18
+      "supports_function_calling": false,
+      "description": "Qwen 2.5 Coder 32B - Best local coding model, 92 languages, rivals GPT-4o (~19GB VRAM)",
+      "intelligence_score": 18,
+      "category": "coder"
     },
     {
       "model_name": "qwen3-coder:30b",
@@ -25,8 +33,21 @@
       "supports_extended_thinking": false,
       "supports_json_mode": true,
       "supports_function_calling": true,
-      "description": "Qwen3 Coder 30B MoE (3.3B active) - 256K context, rivals Claude Sonnet-4 (~19GB VRAM)",
-      "intelligence_score": 18
+      "description": "Qwen3 Coder 30B MoE (3.3B active) - 256K context, rivals Claude Sonnet-4 (~18GB VRAM)",
+      "intelligence_score": 18,
+      "category": "coder"
+    },
+    {
+      "model_name": "devstral-small-2",
+      "aliases": ["devstral2", "agentic", "long-context", "384k"],
+      "context_window": 393216,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "description": "Devstral Small 2 - 384K context, vision, 65.8% SWE-Bench (~15GB VRAM)",
+      "intelligence_score": 18,
+      "category": "coder"
     },
     {
       "model_name": "devstral",
@@ -37,51 +58,8 @@
       "supports_json_mode": true,
       "supports_function_calling": true,
       "description": "Devstral 24B - Agentic coding, 46.8% SWE-Bench, Apache 2.0 (~14GB VRAM)",
-      "intelligence_score": 17
-    },
-    {
-      "model_name": "qwen2.5:3b",
-      "aliases": ["fast", "search", "qwen-fast"],
-      "context_window": 32768,
-      "max_output_tokens": 8192,
-      "supports_extended_thinking": false,
-      "supports_json_mode": true,
-      "supports_function_calling": false,
-      "description": "Qwen 2.5 3B - Fast model for web search queries (~4GB VRAM)",
-      "intelligence_score": 10
-    },
-    {
-      "model_name": "qwen2.5-coder:14b",
-      "aliases": ["synthesis", "medium", "qwen-coder-14b", "code-medium"],
-      "context_window": 131072,
-      "max_output_tokens": 32768,
-      "supports_extended_thinking": false,
-      "supports_json_mode": true,
-      "supports_function_calling": false,
-      "description": "Qwen 2.5 Coder 14B - Synthesis and code generation (~17GB VRAM)",
-      "intelligence_score": 16
-    },
-    {
-      "model_name": "qwen2.5:14b",
-      "aliases": ["qwen-14b", "qwen-medium"],
-      "context_window": 131072,
-      "max_output_tokens": 32768,
-      "supports_extended_thinking": false,
-      "supports_json_mode": true,
-      "supports_function_calling": false,
-      "description": "Qwen 2.5 14B - General purpose medium model (~8GB VRAM)",
-      "intelligence_score": 15
-    },
-    {
-      "model_name": "qwen2.5-coder:32b",
-      "aliases": ["qwen-coder", "qwen-code", "coder"],
-      "context_window": 131072,
-      "max_output_tokens": 32768,
-      "supports_extended_thinking": false,
-      "supports_json_mode": true,
-      "supports_function_calling": false,
-      "description": "Qwen 2.5 Coder 32B - Best local coding model, 92 languages, rivals GPT-4o",
-      "intelligence_score": 18
+      "intelligence_score": 17,
+      "category": "coder"
     },
     {
       "model_name": "deepseek-r1:32b",
@@ -91,8 +69,9 @@
       "supports_extended_thinking": true,
       "supports_json_mode": true,
       "supports_function_calling": false,
-      "description": "DeepSeek-R1 32B (v0528) - Best local reasoning, approaches O3/Gemini 2.5 Pro",
-      "intelligence_score": 18
+      "description": "DeepSeek-R1 32B (v0528) - Best local reasoning, approaches O3/Gemini 2.5 Pro (~19GB VRAM)",
+      "intelligence_score": 18,
+      "category": "reasoning"
     },
     {
       "model_name": "qwen3:32b",
@@ -102,96 +81,81 @@
       "supports_extended_thinking": true,
       "supports_json_mode": true,
       "supports_function_calling": false,
-      "description": "Qwen3 32B - Dual thinking/non-thinking modes, surpasses QwQ",
-      "intelligence_score": 17
+      "description": "Qwen3 32B - Dual thinking/non-thinking modes, surpasses QwQ (~20GB VRAM)",
+      "intelligence_score": 17,
+      "category": "reasoning"
     },
     {
-      "model_name": "gemma3:27b",
-      "aliases": ["gemma3", "gemma", "google"],
-      "context_window": 128000,
-      "max_output_tokens": 32768,
-      "supports_extended_thinking": false,
-      "supports_json_mode": true,
-      "supports_function_calling": false,
-      "description": "Gemma 3 27B - Google's latest, outperforms Llama 405B on LMArena",
-      "intelligence_score": 17
-    },
-    {
-      "model_name": "phi4:14b",
-      "aliases": ["phi4", "phi", "microsoft"],
-      "context_window": 32768,
-      "max_output_tokens": 16384,
-      "supports_extended_thinking": true,
-      "supports_json_mode": true,
-      "supports_function_calling": true,
-      "description": "Phi-4 14B - Microsoft's efficient model, rivals 70B on reasoning",
-      "intelligence_score": 16
-    },
-    {
-      "model_name": "llama3.3:70b-q4_K_M",
-      "aliases": ["llama3.3", "llama-70b"],
-      "context_window": 128000,
-      "max_output_tokens": 32768,
-      "supports_extended_thinking": false,
-      "supports_json_mode": true,
-      "supports_function_calling": true,
-      "description": "Llama 3.3 70B Q4 - Matches Llama 405B performance, needs Q4 quantization",
-      "intelligence_score": 17
-    },
-    {
-      "model_name": "codellama:34b",
-      "aliases": ["codellama", "code-llama"],
-      "context_window": 16384,
-      "max_output_tokens": 8192,
-      "supports_extended_thinking": false,
-      "supports_json_mode": false,
-      "supports_function_calling": false,
-      "description": "CodeLlama 34B - Meta's premier coding model, 20+ languages",
-      "intelligence_score": 15
-    },
-    {
-      "model_name": "deepseek-coder:33b",
-      "aliases": ["deepseek-coder", "ds-coder"],
-      "context_window": 16384,
-      "max_output_tokens": 8192,
-      "supports_extended_thinking": false,
-      "supports_json_mode": true,
-      "supports_function_calling": false,
-      "description": "DeepSeek Coder 33B - Strong coding model, 87 languages",
-      "intelligence_score": 15
-    },
-    {
-      "model_name": "gemma3:12b",
-      "aliases": ["gemma3-12b", "gemma-fast"],
-      "context_window": 128000,
-      "max_output_tokens": 32768,
-      "supports_extended_thinking": false,
-      "supports_json_mode": true,
-      "supports_function_calling": false,
-      "description": "Gemma 3 12B - Fast Google model, good balance of speed and quality",
-      "intelligence_score": 14
-    },
-    {
-      "model_name": "llama3.1:8b",
-      "aliases": ["llama3.1", "llama-8b", "fast-search"],
+      "model_name": "nemotron-3-nano:30b",
+      "aliases": ["nemotron", "nemotron-nano", "nvidia"],
       "context_window": 131072,
       "max_output_tokens": 32768,
       "supports_extended_thinking": false,
       "supports_json_mode": true,
       "supports_function_calling": true,
-      "description": "Llama 3.1 8B - Fast model for web search with tool calling",
-      "intelligence_score": 12
+      "description": "NVIDIA Nemotron-3 Nano 30B - Efficient reasoning model (~24GB VRAM)",
+      "intelligence_score": 16,
+      "category": "reasoning"
     },
     {
-      "model_name": "mistral:7b",
-      "aliases": ["mistral", "mistral-7b", "quick"],
-      "context_window": 32768,
-      "max_output_tokens": 8192,
+      "model_name": "qwen2.5-coder:14b",
+      "aliases": ["qwen-coder-14b", "code-medium", "synthesis"],
+      "context_window": 131072,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "description": "Qwen 2.5 Coder 14B - Efficient coding for medium VRAM (~9GB VRAM)",
+      "intelligence_score": 16,
+      "category": "coder"
+    },
+    {
+      "model_name": "qwen2.5:14b",
+      "aliases": ["qwen-14b", "qwen-medium"],
+      "context_window": 131072,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "description": "Qwen 2.5 14B - General purpose medium model (~9GB VRAM)",
+      "intelligence_score": 15,
+      "category": "general"
+    },
+    {
+      "model_name": "mikepfunk28/deepseekq3_coder",
+      "aliases": ["deepseekq3-coder", "dsq3-coder", "dscoder"],
+      "context_window": 131072,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "description": "DeepSeek Q3 Coder - Community finetune with Qwen3 thinking, 128K context (~5GB VRAM)",
+      "intelligence_score": 15,
+      "category": "community"
+    },
+    {
+      "model_name": "mikepfunk28/deepseekq3_agent",
+      "aliases": ["deepseekq3-agent", "dsq3-agent", "dsagent"],
+      "context_window": 131072,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "description": "DeepSeek Q3 Agent - Community agent-focused finetune with tools (~5GB VRAM)",
+      "intelligence_score": 15,
+      "category": "community"
+    },
+    {
+      "model_name": "second_constantine/deepseek-coder-v2:16b",
+      "aliases": ["deepseek-coder-v2", "ds-coder-v2", "scv2-coder"],
+      "context_window": 163840,
+      "max_output_tokens": 32768,
       "supports_extended_thinking": false,
       "supports_json_mode": true,
       "supports_function_calling": true,
-      "description": "Mistral 7B - Lightweight model for quick queries",
-      "intelligence_score": 10
+      "description": "DeepSeek Coder V2 16B MoE - Community 160K context, IQ4_XS quant (~9GB VRAM)",
+      "intelligence_score": 16,
+      "category": "community"
     },
     {
       "model_name": "dolphin3:8b",
@@ -201,8 +165,9 @@
       "supports_extended_thinking": false,
       "supports_json_mode": true,
       "supports_function_calling": true,
-      "description": "Dolphin 3 8B - Uncensored, general purpose, agentic (Eric Hartford)",
-      "intelligence_score": 13
+      "description": "Dolphin 3 8B - Uncensored, general purpose, agentic (Eric Hartford) (~5GB VRAM)",
+      "intelligence_score": 13,
+      "category": "uncensored"
     },
     {
       "model_name": "dolphin-mistral:7b",
@@ -212,8 +177,21 @@
       "supports_extended_thinking": false,
       "supports_json_mode": true,
       "supports_function_calling": false,
-      "description": "Dolphin Mistral 7B - Uncensored, excels at coding (Eric Hartford)",
-      "intelligence_score": 12
+      "description": "Dolphin Mistral 7B - Uncensored, excels at coding (Eric Hartford) (~4GB VRAM)",
+      "intelligence_score": 12,
+      "category": "uncensored"
+    },
+    {
+      "model_name": "llama3.1:8b",
+      "aliases": ["llama3.1", "llama-8b", "fast-search"],
+      "context_window": 131072,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "description": "Llama 3.1 8B - Fast model for web search with tool calling (~5GB VRAM)",
+      "intelligence_score": 12,
+      "category": "general"
     },
     {
       "model_name": "wizard-vicuna-uncensored:13b",
@@ -223,8 +201,33 @@
       "supports_extended_thinking": false,
       "supports_json_mode": false,
       "supports_function_calling": false,
-      "description": "Wizard Vicuna 13B - Classic uncensored assistant (Eric Hartford)",
-      "intelligence_score": 11
+      "description": "Wizard Vicuna 13B - Classic uncensored assistant (Eric Hartford) (~7.4GB VRAM)",
+      "intelligence_score": 11,
+      "category": "uncensored"
+    },
+    {
+      "model_name": "qwen2.5:3b",
+      "aliases": ["qwen-fast", "fast", "search"],
+      "context_window": 32768,
+      "max_output_tokens": 8192,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "description": "Qwen 2.5 3B - Fast model for web search queries (~2GB VRAM)",
+      "intelligence_score": 10,
+      "category": "general"
+    },
+    {
+      "model_name": "mistral:7b",
+      "aliases": ["mistral", "mistral-7b", "quick"],
+      "context_window": 32768,
+      "max_output_tokens": 8192,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "description": "Mistral 7B - Lightweight model for quick queries (~4.4GB VRAM)",
+      "intelligence_score": 10,
+      "category": "general"
     },
     {
       "model_name": "llama2-uncensored:7b",
@@ -234,19 +237,105 @@
       "supports_extended_thinking": false,
       "supports_json_mode": false,
       "supports_function_calling": false,
-      "description": "Llama 2 Uncensored 7B - Original uncensored Llama 2 (George Sung)",
-      "intelligence_score": 10
+      "description": "Llama 2 Uncensored 7B - Original uncensored Llama 2 (George Sung) (~3.8GB VRAM)",
+      "intelligence_score": 10,
+      "category": "uncensored"
     },
     {
       "model_name": "dolphin-phi",
-      "aliases": ["dolphin-phi", "phi-uncensored"],
+      "aliases": ["dolphin-tiny", "phi-uncensored", "tiny-uncensored"],
       "context_window": 2048,
       "max_output_tokens": 1024,
       "supports_extended_thinking": false,
       "supports_json_mode": false,
       "supports_function_calling": false,
-      "description": "Dolphin Phi 2.7B - Lightweight uncensored (Eric Hartford)",
-      "intelligence_score": 8
+      "description": "Dolphin Phi 2.7B - Lightweight uncensored (Eric Hartford) (~1.6GB VRAM)",
+      "intelligence_score": 8,
+      "category": "uncensored"
+    },
+    {
+      "model_name": "gemma3:27b",
+      "aliases": ["gemma3", "gemma", "google"],
+      "context_window": 128000,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "description": "Gemma 3 27B - Google's latest, outperforms Llama 405B on LMArena (~16GB VRAM)",
+      "intelligence_score": 17,
+      "category": "general"
+    },
+    {
+      "model_name": "phi4:14b",
+      "aliases": ["phi4", "phi", "microsoft"],
+      "context_window": 32768,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "description": "Phi-4 14B - Microsoft's efficient model, rivals 70B on reasoning (~9GB VRAM)",
+      "intelligence_score": 16,
+      "category": "reasoning"
+    },
+    {
+      "model_name": "codellama:34b",
+      "aliases": ["codellama", "code-llama"],
+      "context_window": 16384,
+      "max_output_tokens": 8192,
+      "supports_extended_thinking": false,
+      "supports_json_mode": false,
+      "supports_function_calling": false,
+      "description": "CodeLlama 34B - Meta's premier coding model, 20+ languages (~20GB VRAM)",
+      "intelligence_score": 15,
+      "category": "coder"
+    },
+    {
+      "model_name": "deepseek-coder:33b",
+      "aliases": ["deepseek-coder", "ds-coder"],
+      "context_window": 16384,
+      "max_output_tokens": 8192,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "description": "DeepSeek Coder 33B - Strong coding model, 87 languages (~19GB VRAM)",
+      "intelligence_score": 15,
+      "category": "coder"
+    },
+    {
+      "model_name": "gemma3:12b",
+      "aliases": ["gemma3-12b", "gemma-fast"],
+      "context_window": 128000,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "description": "Gemma 3 12B - Fast Google model, good balance of speed and quality (~7GB VRAM)",
+      "intelligence_score": 14,
+      "category": "general"
+    },
+    {
+      "model_name": "llama3.3:70b-q4_K_M",
+      "aliases": ["llama3.3", "llama-70b"],
+      "context_window": 128000,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "description": "Llama 3.3 70B Q4 - Matches Llama 405B performance, needs Q4 quantization (~40GB VRAM)",
+      "intelligence_score": 17,
+      "category": "general"
+    },
+    {
+      "model_name": "llama3.2",
+      "aliases": ["local-llama", "ollama-llama", "llama"],
+      "context_window": 128000,
+      "max_output_tokens": 64000,
+      "supports_extended_thinking": false,
+      "supports_json_mode": false,
+      "supports_function_calling": false,
+      "description": "Llama 3.2 - Lightweight general-purpose model (fallback) (~2GB VRAM)",
+      "intelligence_score": 6,
+      "category": "general"
     }
   ]
 }

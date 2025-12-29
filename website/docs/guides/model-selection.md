@@ -96,6 +96,26 @@ ollama run deepseek-r1:32b "Prove that there are infinitely many prime numbers"
 
 **Why qwen2.5 for web search?** The qwen2.5 family offers excellent speed-to-quality ratio. The 3B model handles simple queries in milliseconds while the 14B provides deeper synthesis without the overhead of larger models.
 
+## Community Models
+
+High-quality community finetunes available via the `-CoderModels` flag.
+
+| Model | Size | Context | Best For |
+|-------|------|---------|----------|
+| **mikepfunk28/deepseekq3_coder** | ~5GB | 128K | Coding with chain-of-thought |
+| **mikepfunk28/deepseekq3_agent** | ~5GB | 128K | Agent/tool-calling tasks |
+| **second_constantine/deepseek-coder-v2:16b** | ~9GB | 160K | Long-context coding |
+
+**Why community models?** These finetunes often combine strengths from multiple base models. The deepseekq3 series adds Qwen3's thinking capabilities to DeepSeek's coding prowess.
+
+```powershell
+# Install all coding models including community finetunes
+.\setup-ollama.ps1 -CoderModels
+
+# Or pull individually
+ollama pull mikepfunk28/deepseekq3_coder
+```
+
 ## Model Comparison Matrix
 
 | Model | Coding | Reasoning | Chat | Creative | Speed |
@@ -107,6 +127,7 @@ ollama run deepseek-r1:32b "Prove that there are infinitely many prime numbers"
 | deepseek-r1:32b | ★★★★☆ | ★★★★★ | ★★★☆☆ | ★★★☆☆ | ★★★☆☆ |
 | llama3.3:70b | ★★★★☆ | ★★★★★ | ★★★★★ | ★★★★★ | ★★☆☆☆ |
 | phi-4:14b | ★★★★☆ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★★☆ |
+| deepseekq3_coder | ★★★★☆ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★★★ |
 
 ## Quantization Guide
 

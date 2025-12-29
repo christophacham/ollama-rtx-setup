@@ -20,6 +20,7 @@ param(
     [switch]$SkipModels,
     [switch]$MinimalModels,
     [switch]$AllModels,
+    [switch]$CoderModels,
     [switch]$ForceDownload,
     [switch]$Help
 )
@@ -57,13 +58,15 @@ Options:
     -SkipModels      Skip model downloads
     -MinimalModels   Download only essential models (qwen2.5-coder:32b)
     -AllModels       Download all recommended models for 32GB VRAM
+    -CoderModels     Download coding-focused models only (includes community finetunes)
     -ForceDownload   Re-download models even if already installed
     -Help            Show this help message
 
 Examples:
     .\setup-ollama.ps1                    # Smart setup (skips existing)
     .\setup-ollama.ps1 -MinimalModels     # Quick setup with one model
-    .\setup-ollama.ps1 -AllModels         # Download all 10 recommended models
+    .\setup-ollama.ps1 -AllModels         # Download all recommended models
+    .\setup-ollama.ps1 -CoderModels       # Download coding/developer models only
     .\setup-ollama.ps1 -ForceDownload     # Re-download all models
     .\setup-ollama.ps1 -SkipModels        # Configure only, no downloads
 
@@ -72,6 +75,15 @@ Models for 32GB VRAM (Updated Dec 2025):
       - qwen2.5-coder:32b  (~19GB) - Best coding model (rivals GPT-4o)
       - deepseek-r1:32b    (~20GB) - Best reasoning (v0528, approaches O3)
       - qwen3:32b          (~19GB) - Dual thinking modes
+
+    Coder-Only (-CoderModels):
+      - qwen2.5-coder:32b           (~19GB) - Best local coding model
+      - qwen3-coder:30b             (~19GB) - 256K MoE, rivals Claude Sonnet-4
+      - devstral-small-2            (~15GB) - 384K context, 65.8% SWE-Bench
+      - devstral                    (~14GB) - Agentic coding, 46.8% SWE-Bench
+      - mikepfunk28/deepseekq3_coder (~5GB) - DeepSeek Q3 + Qwen3 thinking
+      - mikepfunk28/deepseekq3_agent (~5GB) - Agent-focused variant
+      - second_constantine/deepseek-coder-v2:16b (~9GB) - 160K MoE
 
     Additional (-AllModels):
       - phi4:14b           (~9GB)  - Microsoft's efficient reasoning
@@ -257,7 +269,7 @@ function Start-OllamaService {
 
 # Download models (smart - only missing ones)
 function Install-Models {
-    param([bool]$Minimal, [bool]$All, [bool]$Force)
+    param([bool]$Minimal, [bool]$All, [bool]$Coder, [bool]$Force)
 
     Write-Step "3" "Checking Models"
 
@@ -268,6 +280,20 @@ function Install-Models {
         @{ Name = "qwen3:32b"; Desc = "Dual thinking modes, surpasses QwQ"; Size = "~19GB" }
     )
 
+    # Coder-focused models (for -CoderModels flag)
+    $coderModels = @(
+        @{ Name = "qwen2.5-coder:32b"; Desc = "Best local coding model (rivals GPT-4o)"; Size = "~19GB" },
+        @{ Name = "qwen3-coder:30b"; Desc = "256K MoE, rivals Claude Sonnet-4"; Size = "~19GB" },
+        @{ Name = "devstral-small-2"; Desc = "384K context, vision, 65.8% SWE-Bench"; Size = "~15GB" },
+        @{ Name = "devstral"; Desc = "Agentic coding, 46.8% SWE-Bench"; Size = "~14GB" },
+        @{ Name = "mikepfunk28/deepseekq3_coder"; Desc = "DeepSeek Q3 + Qwen3 thinking"; Size = "~5GB" },
+        @{ Name = "mikepfunk28/deepseekq3_agent"; Desc = "Agent-focused variant with tools"; Size = "~5GB" },
+        @{ Name = "second_constantine/deepseek-coder-v2:16b"; Desc = "160K MoE, IQ4_XS quantized"; Size = "~9GB" },
+        @{ Name = "qwen2.5-coder:14b"; Desc = "Efficient coding for medium VRAM"; Size = "~9GB" },
+        @{ Name = "deepseek-coder:33b"; Desc = "Strong coding (87 languages)"; Size = "~19GB" },
+        @{ Name = "codellama:34b"; Desc = "Meta's premier coding model"; Size = "~20GB" }
+    )
+
     $extraModels = @(
         @{ Name = "devstral-small-2"; Desc = "384K context, vision, 65.8% SWE-Bench"; Size = "~15GB" },
         @{ Name = "qwen3-coder:30b"; Desc = "256K MoE, rivals Claude Sonnet-4"; Size = "~19GB" },
@@ -275,16 +301,22 @@ function Install-Models {
         @{ Name = "phi4:14b"; Desc = "Microsoft's efficient reasoning (rivals 70B)"; Size = "~9GB" },
         @{ Name = "gemma3:27b"; Desc = "Google's latest (outperforms 405B)"; Size = "~16GB" },
         @{ Name = "codellama:34b"; Desc = "Meta's premier coding model"; Size = "~20GB" },
-        @{ Name = "deepseek-coder:33b"; Desc = "Strong coding alternative (87 langs)"; Size = "~19GB" }
+        @{ Name = "deepseek-coder:33b"; Desc = "Strong coding alternative (87 langs)"; Size = "~19GB" },
+        @{ Name = "mikepfunk28/deepseekq3_coder"; Desc = "Community: DeepSeek Q3 + Qwen3 thinking"; Size = "~5GB" },
+        @{ Name = "mikepfunk28/deepseekq3_agent"; Desc = "Community: Agent-focused variant"; Size = "~5GB" },
+        @{ Name = "second_constantine/deepseek-coder-v2:16b"; Desc = "Community: 160K MoE coder"; Size = "~9GB" }
     )
 
     # Select models based on flags
     if ($Minimal) {
         $targetModels = @($coreModels[0])
         Write-Info "Minimal mode: Targeting qwen2.5-coder:32b only"
+    } elseif ($Coder) {
+        $targetModels = $coderModels
+        Write-Info "Coder mode: Targeting 10 coding-focused models"
     } elseif ($All) {
         $targetModels = $coreModels + $extraModels
-        Write-Info "Full mode: Targeting all 10 recommended models"
+        Write-Info "Full mode: Targeting all recommended models"
     } else {
         $targetModels = $coreModels
         Write-Info "Standard mode: Targeting 3 core models"
@@ -703,7 +735,7 @@ function Main {
 
     # Download models (only missing ones)
     if ($success -and -not $SkipModels) {
-        if (-not (Install-Models -Minimal:$MinimalModels -All:$AllModels -Force:$ForceDownload)) {
+        if (-not (Install-Models -Minimal:$MinimalModels -All:$AllModels -Coder:$CoderModels -Force:$ForceDownload)) {
             Write-Warn "Some models failed to download, but continuing..."
         }
     } else {

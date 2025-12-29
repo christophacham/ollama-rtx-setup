@@ -86,6 +86,16 @@ The `setup-ollama-websearch.ps1` installs a specialized stack:
 
 **Total: ~21GB** - both models fit in VRAM simultaneously, leaving ~11GB for context.
 
+### Community Finetunes
+
+High-quality community models from Ollama library.
+
+| Model | Size | Best For | Context | Notes |
+|-------|------|----------|---------|-------|
+| **mikepfunk28/deepseekq3_coder** | ~5GB | Coding | 128K | DeepSeek + Qwen3 thinking, tools support |
+| **mikepfunk28/deepseekq3_agent** | ~5GB | Agents | 128K | Agent-focused variant with tool calling |
+| **second_constantine/deepseek-coder-v2:16b** | ~9GB | Coding | 160K | MoE architecture, IQ4_XS quantized |
+
 ### Uncensored Models (No Content Filters)
 
 Models with alignment/safety filters removed. Use responsibly.
@@ -105,9 +115,10 @@ Models with alignment/safety filters removed. Use responsibly.
 Installs Ollama and downloads optimal models:
 
 ```powershell
-.\setup-ollama.ps1              # Full setup (3 core models)
+.\setup-ollama.ps1                  # Full setup (3 core models)
 .\setup-ollama.ps1 -MinimalModels   # Just qwen2.5-coder:32b
-.\setup-ollama.ps1 -AllModels       # All 5 recommended models
+.\setup-ollama.ps1 -AllModels       # All recommended models
+.\setup-ollama.ps1 -CoderModels     # Coding-focused models only (10 models)
 .\setup-ollama.ps1 -Help            # Show options
 ```
 
@@ -255,7 +266,54 @@ $env:OLLAMA_HOST = "0.0.0.0"
 | `setup-ollama-websearch.ps1` | Web search setup script |
 | `docker-compose-openwebui.yml` | Open WebUI Docker config |
 | `docker-compose-perplexica.yml` | Perplexica + SearXNG Docker config |
-| `custom_models.json` | Model configurations for PAL MCP |
+| `custom_models.json` | Model configurations for PAL MCP (see below) |
+
+## PAL MCP Integration (custom_models.json)
+
+The `custom_models.json` file configures local Ollama models for use with [PAL MCP Server](https://github.com/BeehiveInnovations/pal-mcp-server).
+
+### Usage
+
+Copy to your PAL MCP server's `conf/` directory:
+
+```powershell
+# Copy to PAL MCP config
+Copy-Item custom_models.json "C:\path\to\pal-mcp-server\conf\"
+```
+
+### Model Categories
+
+| Category | Description | Example Models |
+|----------|-------------|----------------|
+| `coder` | Coding-focused models | qwen2.5-coder:32b, devstral-small-2 |
+| `reasoning` | Extended thinking/CoT | deepseek-r1:32b, qwen3:32b, phi4:14b |
+| `general` | General purpose | gemma3:27b, llama3.1:8b, mistral:7b |
+| `uncensored` | No content filters | dolphin3:8b, dolphin-mistral:7b |
+| `community` | Community finetunes | mikepfunk28/deepseekq3_coder |
+
+### Model Aliases
+
+Each model has short aliases for easy reference in PAL:
+
+```
+"Use qwen-coder to review this code"     # → qwen2.5-coder:32b
+"Use deepseek to debug this"             # → deepseek-r1:32b
+"Use dscoder for this task"              # → mikepfunk28/deepseekq3_coder
+```
+
+### Fields Reference
+
+| Field | Description |
+|-------|-------------|
+| `model_name` | Ollama model name (e.g., `qwen2.5-coder:32b`) |
+| `aliases` | Short names for the model (case-insensitive) |
+| `context_window` | Max input tokens |
+| `max_output_tokens` | Max response tokens |
+| `supports_extended_thinking` | Has chain-of-thought reasoning |
+| `supports_json_mode` | Can output structured JSON |
+| `supports_function_calling` | Has tool/function calling |
+| `intelligence_score` | Relative capability (1-20) |
+| `category` | Model category for organization |
 
 ## Requirements
 
