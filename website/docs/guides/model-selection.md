@@ -102,9 +102,18 @@ High-quality community finetunes available via the `-CoderModels` flag.
 
 | Model | Size | Context | Best For |
 |-------|------|---------|----------|
+| **NeuralNexusLab/CodeXor:20b** | ~14GB | 128K | Zero-omission coding (GPT-OSS base) |
+| **NeuralNexusLab/CodeXor:12b** | ~9GB | 128K | **VISION** + coding (Gemma 3 base) |
 | **mikepfunk28/deepseekq3_coder** | ~5GB | 128K | Coding with chain-of-thought |
 | **mikepfunk28/deepseekq3_agent** | ~5GB | 128K | Agent/tool-calling tasks |
 | **second_constantine/deepseek-coder-v2:16b** | ~9GB | 160K | Long-context coding |
+
+### CodeXor - Zero-Omission Coding
+
+[NeuralNexusLab/CodeXor](https://ollama.com/NeuralNexusLab/CodeXor) is engineered with a "zero-omission" philosophy - it won't use lazy placeholders like `// ... implement logic here`.
+
+- **CodeXor:20b** - Based on OpenAI GPT-OSS 20B (Apache 2.0), matches o3-mini on coding benchmarks
+- **CodeXor:12b** - Based on Google Gemma 3, includes **vision capability** for analyzing screenshots and diagrams
 
 **Why community models?** These finetunes often combine strengths from multiple base models. The deepseekq3 series adds Qwen3's thinking capabilities to DeepSeek's coding prowess.
 
@@ -120,6 +129,8 @@ ollama pull mikepfunk28/deepseekq3_coder
 
 | Model | Coding | Reasoning | Chat | Creative | Speed |
 |-------|--------|-----------|------|----------|-------|
+| CodeXor:20b | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ |
+| CodeXor:12b | ★★★★☆ | ★★★☆☆ | ★★★☆☆ | ★★☆☆☆ | ★★★★☆ |
 | qwen2.5:3b | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★☆☆☆ | ★★★★★ |
 | qwen2.5:14b | ★★★★☆ | ★★★★☆ | ★★★★☆ | ★★★☆☆ | ★★★★☆ |
 | qwen2.5-coder:14b | ★★★★★ | ★★★☆☆ | ★★★☆☆ | ★★☆☆☆ | ★★★★☆ |

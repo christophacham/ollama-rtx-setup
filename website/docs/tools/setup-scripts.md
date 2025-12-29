@@ -14,6 +14,7 @@ PowerShell scripts for automated setup and management.
 | `setup-ollama-websearch.ps1` | Web search integration (Open WebUI, Perplexica) |
 | `setup-uncensored-models.ps1` | Download uncensored/unfiltered models |
 | `limit-ollama-bandwidth.ps1` | Limit download bandwidth (requires Admin) |
+| `scan-ollama-models.ps1` | Scan Ollama library for new coder models |
 | `backup-ollama-models.ps1` | Backup/restore models to external storage |
 | `debug-ollama-connection.ps1` | Diagnose container connectivity issues |
 | `test-ollama-stack.ps1` | Test suite for verifying setup |
@@ -206,6 +207,66 @@ $env:OLLAMA_DOWNLOAD_CONN = 1
 ```
 This limits to a single download connection (fair share with other traffic).
 :::
+
+## scan-ollama-models.ps1
+
+Scans Ollama library for new coder models not in your configuration.
+
+### Usage
+
+```powershell
+# Scan for new models with >100 pulls
+.\scan-ollama-models.ps1
+
+# Lower threshold to find more models
+.\scan-ollama-models.ps1 -MinPulls 50
+
+# Save results to JSON report
+.\scan-ollama-models.ps1 -SaveReport
+
+# Check for updates to existing models
+.\scan-ollama-models.ps1 -CheckUpdates
+```
+
+### How It Works
+
+Since Ollama doesn't have a public browse API, the script maintains a **watchlist** of known quality model namespaces:
+
+| Type | Namespaces |
+|------|------------|
+| Official | qwen2.5-coder, qwen3-coder, deepseek-coder, codellama, devstral, gpt-oss |
+| Community | NeuralNexusLab/CodeXor, mikepfunk28/deepseekq3, mannix/qwen2.5-coder |
+
+The script:
+1. Queries each namespace on Ollama's website
+2. Extracts pull counts and update dates
+3. Compares against your `custom_models.json`
+4. Reports new models above the pull threshold
+
+### Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `-MinPulls` | Minimum pull count to consider (default: 100) |
+| `-ConfigPath` | Path to custom_models.json (default: ./custom_models.json) |
+| `-CheckUpdates` | Also check if installed models have updates |
+| `-SaveReport` | Save results to scan-report.json |
+
+### Example Output
+
+```
+  Checking qwen2.5-coder... 150000 pulls, EXISTS
+  Checking NeuralNexusLab/CodeXor... 134 pulls, NEW
+  Checking mikepfunk28/deepseekq3... 50 pulls, EXISTS
+
+New models meeting criteria (>= 100 pulls):
+  NeuralNexusLab/CodeXor - 134 pulls, updated 2 days ago
+
+To add these models:
+  1. Add to $coderModels in setup-ollama.ps1
+  2. Add entry to custom_models.json
+  3. Run: ollama pull <model-name>
+```
 
 ## setup-uncensored-models.ps1
 

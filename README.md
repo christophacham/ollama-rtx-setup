@@ -92,6 +92,8 @@ High-quality community models from Ollama library.
 
 | Model | Size | Best For | Context | Notes |
 |-------|------|----------|---------|-------|
+| **NeuralNexusLab/CodeXor:20b** | ~14GB | Coding | 128K | GPT-OSS base, zero-omission philosophy |
+| **NeuralNexusLab/CodeXor:12b** | ~9GB | Coding + Vision | 128K | Gemma 3 base, can analyze screenshots |
 | **mikepfunk28/deepseekq3_coder** | ~5GB | Coding | 128K | DeepSeek + Qwen3 thinking, tools support |
 | **mikepfunk28/deepseekq3_agent** | ~5GB | Agents | 128K | Agent-focused variant with tool calling |
 | **second_constantine/deepseek-coder-v2:16b** | ~9GB | Coding | 160K | MoE architecture, IQ4_XS quantized |
@@ -287,6 +289,7 @@ $env:OLLAMA_HOST = "0.0.0.0"
 | `setup-ollama.ps1` | Main Ollama setup script |
 | `setup-uncensored-models.ps1` | Uncensored models installer |
 | `limit-ollama-bandwidth.ps1` | Bandwidth limiter for downloads (requires Admin) |
+| `scan-ollama-models.ps1` | Scan Ollama library for new coder models |
 | `backup-ollama-models.ps1` | Backup/restore models to external storage |
 | `setup-ollama-websearch.ps1` | Web search setup script |
 | `docker-compose-openwebui.yml` | Open WebUI Docker config |
