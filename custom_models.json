@@ -14,45 +14,9 @@
         "coder",
         "qwen25-coder"
       ],
-      "model_name": "qwen2.5-coder:32b",
+      "model_name": "qwen2.5-coder:32b-5090",
       "intelligence_score": 18,
       "supports_function_calling": false
-    },
-    {
-      "supports_json_mode": true,
-      "max_image_size_mb": 0.0,
-      "description": "CodeXor 20B - OpenAI GPT-OSS base, zero-omission (no lazy placeholders), matches o3-mini on coding",
-      "supports_images": false,
-      "context_window": 131072,
-      "supports_extended_thinking": false,
-      "max_output_tokens": 32768,
-      "aliases": [
-        "codexor",
-        "codexor-20b",
-        "xor-20b",
-        "zero-omission"
-      ],
-      "model_name": "NeuralNexusLab/CodeXor:20b",
-      "intelligence_score": 17,
-      "supports_function_calling": true
-    },
-    {
-      "supports_json_mode": true,
-      "max_image_size_mb": 20.0,
-      "description": "CodeXor 12B - Gemma 3 base with VISION capability, analyzes screenshots/diagrams/UI mockups",
-      "supports_images": true,
-      "context_window": 131072,
-      "supports_extended_thinking": false,
-      "max_output_tokens": 32768,
-      "aliases": [
-        "codexor-12b",
-        "xor-12b",
-        "codexor-vision",
-        "vision-coder"
-      ],
-      "model_name": "NeuralNexusLab/CodeXor:12b",
-      "intelligence_score": 16,
-      "supports_function_calling": true
     },
     {
       "supports_json_mode": true,
@@ -68,7 +32,7 @@
         "r1",
         "reasoning"
       ],
-      "model_name": "deepseek-r1:32b",
+      "model_name": "deepseek-r1:32b-5090",
       "intelligence_score": 18,
       "supports_function_calling": false
     },
@@ -85,7 +49,7 @@
         "qwen",
         "local-qwen"
       ],
-      "model_name": "qwen3:32b",
+      "model_name": "qwen3:32b-5090",
       "intelligence_score": 17,
       "supports_function_calling": false
     },
@@ -185,7 +149,7 @@
         "llama-8b",
         "fast-search"
       ],
-      "model_name": "llama3.1:8b",
+      "model_name": "llama3.1:8b-5090",
       "intelligence_score": 12,
       "supports_function_calling": true
     },
