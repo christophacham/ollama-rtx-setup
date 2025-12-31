@@ -154,6 +154,45 @@
       "intelligence_score": 16
     },
     {
+      "model_name": "mistralai/devstral-2512:free",
+      "aliases": ["devstral", "devstral-free", "agentic-coder", "swe-agent"],
+      "description": "Devstral Free - Mistral's 24B agentic coding model, optimized for SWE-bench and tool use",
+      "context_window": 131072,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "intelligence_score": 15
+    },
+    {
+      "model_name": "kwaipilot/kat-coder-pro:free",
+      "aliases": ["kat-coder", "kat-free", "kuaishou-coder"],
+      "description": "Kat Coder Pro Free - Kuaishou's coding model with strong code completion and generation",
+      "context_window": 131072,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "intelligence_score": 14
+    },
+    {
+      "model_name": "minimax/minimax-m2",
+      "aliases": ["minimax", "m2", "minimax-m2"],
+      "description": "MiniMax M2 - 456B MoE flagship with 1M context, hybrid reasoning, vision and audio understanding",
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "intelligence_score": 17
+    },
+    {
       "model_name": "meta-llama/llama-3.3-70b-instruct:free",
       "aliases": ["llama-free", "free-llama", "free-70b", "quality-free"],
       "description": "Llama 3.3 70B Free - Solid 70B dense model, multilingual, quality without cost",
