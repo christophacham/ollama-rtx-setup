@@ -6,11 +6,11 @@
     "note": "Aliases use -cloud suffix to avoid conflicts with local Ollama models",
     "field_notes": "Matches providers/shared/model_capabilities.py.",
     "routing_logic": {
-      "overnight_bulk": "MiMo-V2-Flash or DeepSeek V3.2",
+      "overnight_bulk": "DeepSeek V3.2",
       "big_file_translation": "Qwen3 Coder (262K context)",
-      "fast_iteration": "Grok Code Fast 1",
+      "fast_iteration": "Gemini 3 Flash Preview",
       "massive_context_images": "Llama 4 Maverick (1M context)",
-      "cheap_test_runs": "MiMo-V2-Flash:free or Llama 3.3 70B:free",
+      "cheap_test_runs": "MiMo-V2-Flash:free, Gemini 3 Flash Preview, or Llama 3.3 70B:free",
       "quick_questions": "Gemini 2.5 Flash",
       "fallback_allrounder": "Mistral Large 3",
       "hard_reasoning": "DeepSeek V3.2 Speciale"
@@ -76,34 +76,21 @@
       "intelligence_score": 17
     },
     {
-      "model_name": "x-ai/grok-code-fast-1",
-      "aliases": ["grok-code", "grok-fast", "speed-king"],
-      "description": "Grok Code Fast 1 - Speed king for fast iterations, optimized for Rust/C++/Python/TS",
-      "context_window": 256000,
-      "max_output_tokens": 10000,
-      "supports_extended_thinking": true,
-      "supports_json_mode": true,
-      "supports_function_calling": true,
-      "supports_images": false,
-      "max_image_size_mb": 0.0,
-      "intelligence_score": 15
-    },
-    {
-      "model_name": "xiaomi/mimo-v2-flash",
-      "aliases": ["mimo", "mimo-flash", "swe-bench", "agentic-cloud"],
-      "description": "MiMo-V2-Flash - Cheapest paid, #1 SWE-bench, great for agentic coding (disable reasoning)",
-      "context_window": 262144,
+      "model_name": "google/gemini-3-flash-preview",
+      "aliases": ["gemini3-flash", "g3-flash", "speed-king"],
+      "description": "Gemini 3 Flash Preview - Speed king for fast iterations, native audio/video, 1M context",
+      "context_window": 1048576,
       "max_output_tokens": 65536,
       "supports_extended_thinking": true,
       "supports_json_mode": true,
       "supports_function_calling": true,
-      "supports_images": false,
-      "max_image_size_mb": 0.0,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
       "intelligence_score": 16
     },
     {
       "model_name": "xiaomi/mimo-v2-flash:free",
-      "aliases": ["mimo-free", "free-mimo", "test-runs"],
+      "aliases": ["mimo", "mimo-free", "free-mimo", "test-runs", "swe-bench", "agentic-cloud"],
       "description": "MiMo-V2-Flash Free - Zero cost for test runs and low-stakes tasks",
       "context_window": 262144,
       "max_output_tokens": 65536,
@@ -152,6 +139,19 @@
       "supports_images": true,
       "max_image_size_mb": 10.0,
       "intelligence_score": 15
+    },
+    {
+      "model_name": "z-ai/glm-4.7",
+      "aliases": ["glm", "glm4", "zhipu", "chatglm"],
+      "description": "GLM-4.7 - ZhiPu's flagship 256K context model, strong multilingual reasoning and code generation",
+      "context_window": 262144,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "max_image_size_mb": 10.0,
+      "intelligence_score": 16
     },
     {
       "model_name": "meta-llama/llama-3.3-70b-instruct:free",
