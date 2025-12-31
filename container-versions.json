@@ -1,6 +1,6 @@
 {
   "registry": "ghcr.io/christophacham/ollama-rtx-setup",
-  "last_check": "2025-12-30T06:15:00.8989129+00:00",
+  "last_check": "2025-12-31T06:14:54.1059846+00:00",
   "images": {
     "open-webui:cuda": {
       "upstream": "ghcr.io/open-webui/open-webui:cuda",
@@ -18,9 +18,9 @@
     },
     "searxng:latest": {
       "upstream": "docker.io/searxng/searxng:latest",
-      "upstream_digest": "sha256:6f3a875c64bd804d1ccf2fe3c8df35e985b75ffbf0322f216544e79912fabab2",
-      "local_digest": "sha256:6f3a875c64bd804d1ccf2fe3c8df35e985b75ffbf0322f216544e79912fabab2",
-      "synced_at": "2025-12-30T06:15:09.9413838+00:00",
+      "upstream_digest": "sha256:1ad4159e74903f8870e3464df701b800a75bd2854f5d11b44ce09ee297f3c158",
+      "local_digest": "sha256:1ad4159e74903f8870e3464df701b800a75bd2854f5d11b44ce09ee297f3c158",
+      "synced_at": "2025-12-31T06:15:01.4003132+00:00",
       "status": "synced"
     },
     "perplexica-backend:main": {
