@@ -158,6 +158,25 @@ Limit Ollama download bandwidth to prevent network saturation (requires Admin):
 - Easy enable/disable with `-Limit` and `-Unlimit`
 - Interactive menu if run without flags
 
+### `move-ollama-models.ps1`
+
+Move all Ollama models to a different drive and reconfigure Ollama to use the new location:
+
+```powershell
+.\move-ollama-models.ps1                          # Move to X:\OllamaModels (default)
+.\move-ollama-models.ps1 -TargetPath "D:\AI\Models"  # Custom location
+.\move-ollama-models.ps1 -SkipMove                # Just set env var (files already moved)
+```
+
+**Features:**
+- Stops Ollama service/processes automatically
+- Uses `robocopy` with multi-threading for fast, reliable transfers
+- Sets `OLLAMA_MODELS` environment variable system-wide
+- Restarts Ollama after migration
+- Verifies with `ollama list`
+
+**Why move to SSD?** Model loading is I/O bound. A 20GB model loads in ~7s from NVMe vs ~133s from HDD. Once in VRAM, disk speed doesn't matter.
+
 ### `backup-ollama-models.ps1`
 
 Backup and restore your Ollama models to/from external storage:
@@ -361,6 +380,7 @@ $env:OLLAMA_HOST = "0.0.0.0"
 | `update-pal-config.ps1` | Sync PAL MCP config with Ollama models |
 | `limit-ollama-bandwidth.ps1` | Bandwidth limiter for downloads (requires Admin) |
 | `scan-ollama-models.ps1` | Scan Ollama library for new coder models |
+| `move-ollama-models.ps1` | Move models to another drive (requires Admin) |
 | `backup-ollama-models.ps1` | Backup/restore models to external storage |
 | `setup-ollama-websearch.ps1` | Web search setup script |
 | `docker-compose-openwebui.yml` | Open WebUI Docker config |

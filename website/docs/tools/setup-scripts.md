@@ -17,6 +17,7 @@ PowerShell scripts for automated setup and management.
 | `setup-uncensored-models.ps1` | Download uncensored/unfiltered models |
 | `limit-ollama-bandwidth.ps1` | Limit download bandwidth (requires Admin) |
 | `scan-ollama-models.ps1` | Scan Ollama library for new coder models |
+| `move-ollama-models.ps1` | Move models to another drive (requires Admin) |
 | `backup-ollama-models.ps1` | Backup/restore models to external storage |
 | `debug-ollama-connection.ps1` | Diagnose container connectivity issues |
 | `test-ollama-stack.ps1` | Test suite for verifying setup |
@@ -511,6 +512,95 @@ If you don't have Admin rights, set the environment variable instead:
 $env:OLLAMA_DOWNLOAD_CONN = 1
 ```
 This limits to a single download connection (fair share with other traffic).
+:::
+
+## move-ollama-models.ps1
+
+Moves all Ollama models to a different drive and reconfigures Ollama to use the new location. **Requires Administrator privileges.**
+
+### Why Move to SSD?
+
+Model loading is heavily I/O bound. Here's the difference:
+
+| Storage | Sequential Read | 20GB Model Load |
+|---------|-----------------|-----------------|
+| NVMe SSD | 3000-7000 MB/s | ~7 seconds |
+| SATA SSD | 500-550 MB/s | ~40 seconds |
+| HDD | 80-160 MB/s | ~133 seconds |
+
+Once loaded into VRAM, disk speed doesn't matter. But if you frequently swap between models, SSD is essential.
+
+### Usage
+
+```powershell
+# Move to X:\OllamaModels (default)
+.\move-ollama-models.ps1
+
+# Custom target path
+.\move-ollama-models.ps1 -TargetPath "D:\AI\Models"
+
+# Just set environment variable (files already moved manually)
+.\move-ollama-models.ps1 -SkipMove
+```
+
+### Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `-TargetPath` | Destination folder (default: `X:\OllamaModels`) |
+| `-SkipMove` | Only set `OLLAMA_MODELS` env var, don't move files |
+
+### How It Works
+
+1. **Stop Ollama** - Stops service and all ollama processes
+2. **Create Target** - Creates destination folder if needed
+3. **Check Space** - Verifies enough free space on target drive
+4. **Move Files** - Uses `robocopy /MOVE /MT:8` for reliable, multi-threaded transfer
+5. **Set Environment** - Sets `OLLAMA_MODELS` system-wide
+6. **Restart Ollama** - Starts service or process
+7. **Verify** - Runs `ollama list` to confirm
+
+### Example Output
+
+```
+=== Ollama Model Migration Script ===
+
+[*] Current models location: C:\Users\You\.ollama\models
+[*] Target location: X:\OllamaModels
+[*] Free space on X: : 450.23 GB
+[*] Current models size: 147.5 GB
+
+[*] Stopping Ollama...
+[+] Ollama service stopped
+
+[*] Moving models from C:\Users\You\.ollama\models to X:\OllamaModels...
+[*] This may take a while for large models...
+[+] Models moved successfully!
+
+[*] Setting OLLAMA_MODELS environment variable...
+[+] OLLAMA_MODELS set to: X:\OllamaModels
+
+[*] Starting Ollama...
+[+] Ollama service started
+
+=== Migration Complete ===
+
+[+] Models location: X:\OllamaModels
+[+] Environment variable OLLAMA_MODELS is set
+
+[*] Verifying with 'ollama list'...
+NAME                        ID              SIZE      MODIFIED
+deepseek-r1:32b-5090        abc123...       19 GB     2 hours ago
+qwen2.5-coder:32b-5090      def456...       19 GB     3 hours ago
+...
+```
+
+:::tip After Migration
+You may need to restart your terminal or log out/in for the environment variable to take effect in all applications.
+:::
+
+:::warning Disk Space
+Ensure your target drive has enough free space. The script checks this before starting, but will fail if space runs out mid-transfer.
 :::
 
 ## scan-ollama-models.ps1
