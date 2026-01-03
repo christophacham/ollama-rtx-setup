@@ -1,6 +1,6 @@
-# Codex CLI Setup with PAL MCP
+# Codex & Gemini CLI Setup with PAL MCP
 
-Complete guide to setting up OpenAI Codex CLI with PAL MCP Server integration for multi-model orchestration with your local Ollama models.
+Complete guide to setting up OpenAI Codex CLI and Google Gemini CLI with PAL MCP Server integration for multi-model orchestration with your local Ollama models.
 
 ## Why Codex CLI + PAL?
 
@@ -673,9 +673,95 @@ If you followed the main setup in this repo, you already have:
 
 ---
 
+---
+
+## Gemini CLI Setup (Bonus)
+
+Google's Gemini CLI also supports MCP! The setup is nearly identical to Codex.
+
+### Installation
+
+```powershell
+# Install Gemini CLI
+npm install -g @google/generative-ai-cli
+
+# Verify installation
+gemini --version
+```
+
+### Configuration
+
+Gemini uses `~/.gemini/settings.json` instead of a TOML file:
+
+**Copy the template:**
+```powershell
+cp gemini-settings.json ~/.gemini/settings.json
+```
+
+**Edit and replace `YOUR_USERNAME`** with your actual Windows username.
+
+**Gemini settings.json structure:**
+```json
+{
+  "mcpServers": {
+    "pal": {
+      "command": "C:\\Users\\YOUR_USERNAME\\anaconda3\\condabin\\conda.bat",
+      "args": [
+        "run",
+        "-n",
+        "pal-mcp",
+        "--no-capture-output",
+        "python",
+        "C:\\Users\\YOUR_USERNAME\\code\\pal-mcp-server\\server.py"
+      ],
+      "env": {
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "DEFAULT_MODEL": "auto"
+      }
+    }
+  },
+  "security": {
+    "auth": {
+      "selectedType": "oauth-personal"
+    }
+  }
+}
+```
+
+### Usage
+
+```powershell
+# Launch Gemini CLI
+gemini
+
+# Check MCP servers
+gemini mcp list
+
+# Use PAL tools (similar to Codex)
+gemini "Use pal to list available models"
+```
+
+### Key Differences: Codex vs Gemini
+
+| Feature | Codex CLI | Gemini CLI |
+|---------|-----------|------------|
+| Config format | TOML | JSON |
+| Config location | `~/.codex/config.toml` | `~/.gemini/settings.json` |
+| Model profiles | Built-in (via config) | Set with `-m` flag |
+| Provider | OpenAI (Ollama via OSS mode) | Google Gemini (cloud) |
+| MCP support | ✅ Yes | ✅ Yes |
+| Local models | ✅ Via Ollama | ❌ Cloud only (but PAL uses Ollama) |
+| Web search | Native feature flag | Not built-in (use PAL) |
+| Best for | Local-first, coding | Gemini-specific features |
+
+**Recommendation:** Use **Codex CLI** for local-first workflows with Ollama. Use **Gemini CLI** if you want Google's latest models alongside your local Ollama models via PAL.
+
+---
+
 ## Related Documentation
 
 - [PAL MCP Server](https://github.com/BeehiveInnovations/pal-mcp-server)
 - [Codex CLI Documentation](https://developers.openai.com/codex)
+- [Gemini CLI Documentation](https://github.com/google/generative-ai-cli)
 - [Model Selection Guide](../guides/model-selection.md)
 - [PAL + Ollama Integration](../../docs/PAL-OLLAMA-INTEGRATION.md)

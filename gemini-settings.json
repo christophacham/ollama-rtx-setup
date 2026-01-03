@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "pal": {
+      "command": "C:\\Users\\YOUR_USERNAME\\anaconda3\\condabin\\conda.bat",
+      "args": [
+        "run",
+        "-n",
+        "pal-mcp",
+        "--no-capture-output",
+        "python",
+        "C:\\Users\\YOUR_USERNAME\\code\\pal-mcp-server\\server.py"
+      ],
+      "env": {
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "DEFAULT_MODEL": "auto"
+      }
+    }
+  },
+  "security": {
+    "auth": {
+      "selectedType": "oauth-personal"
+    }
+  }
+}
