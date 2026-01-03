@@ -196,7 +196,7 @@ Backup and restore your Ollama models to/from external storage:
 
 ### `setup-ollama-websearch.ps1`
 
-Adds web search capabilities with optimized models and integrated testing:
+Adds web search capabilities with Open WebUI or Perplexica (both include SearXNG):
 
 ```powershell
 # Recommended: Single-user mode (no login required)
@@ -205,13 +205,16 @@ Adds web search capabilities with optimized models and integrated testing:
 .\setup-ollama-websearch.ps1                     # Interactive menu
 .\setup-ollama-websearch.ps1 -Setup Perplexica   # Install Perplexica
 .\setup-ollama-websearch.ps1 -Setup Both         # Install both
+.\setup-ollama-websearch.ps1 -Test               # Run health & inference tests
+.\setup-ollama-websearch.ps1 -Diagnose           # Troubleshoot connectivity
 .\setup-ollama-websearch.ps1 -Uninstall          # Remove containers
 ```
 
 **Features:**
-- Pulls 3 optimized models (qwen2.5:3b, qwen2.5:14b, qwen2.5-coder:14b)
-- Runs automated inference & web search testing
-- Pre-configures Open WebUI with web search enabled
+- Downloads optimized models (qwen2.5:3b, qwen2.5-coder:14b)
+- SearXNG always bundled for multi-engine web search
+- Fast setup by default (no waiting for health checks)
+- Use `-Test` to verify setup, `-Diagnose` to troubleshoot
 
 ### `optimize-ollama-5090.ps1`
 

@@ -427,16 +427,29 @@ curl http://localhost:4000/search?q=test&format=json
 
 ## Testing Your Setup
 
-The setup script includes integrated testing that runs automatically after installation.
+By default, the setup script just starts containers quickly. Use `-Test` to verify everything works:
+
+```powershell
+.\setup-ollama-websearch.ps1 -Test
+```
 
 ### What Gets Tested
 
-| Phase | Test | What It Checks |
-|-------|------|----------------|
-| 1 | Model inference | Each model responds to a simple prompt |
-| 2 | SearXNG availability | Search engine returns results |
-| 3 | Web context | Model processes search results |
-| 4 | Log check | Open WebUI shows web search activity |
+| Test | What It Checks |
+|------|----------------|
+| Container health | All containers running and healthy |
+| Model inference | Each model responds to a simple prompt |
+| Web endpoints | Open WebUI, SearXNG, Perplexica respond |
+
+### Troubleshooting
+
+If something isn't working, use `-Diagnose`:
+
+```powershell
+.\setup-ollama-websearch.ps1 -Diagnose
+```
+
+Shows: container runtime, Ollama status, container status, network config, and logs for unhealthy containers.
 
 ### Manual Testing
 

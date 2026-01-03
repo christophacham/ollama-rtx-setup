@@ -89,7 +89,7 @@ Models are selected based on your VRAM:
 
 ## setup-ollama-websearch.ps1
 
-Installs web search integration with optimized models and integrated testing.
+Installs web search integration with Open WebUI or Perplexica. SearXNG is always bundled for multi-engine web search.
 
 ### Usage
 
@@ -112,6 +112,12 @@ Installs web search integration with optimized models and integrated testing.
 # Use mirrored images from your registry
 .\setup-ollama-websearch.ps1 -UseLocalRegistry
 
+# Run tests on existing setup
+.\setup-ollama-websearch.ps1 -Test
+
+# Troubleshoot connectivity issues
+.\setup-ollama-websearch.ps1 -Diagnose
+
 # Remove all web search containers
 .\setup-ollama-websearch.ps1 -Uninstall
 ```
@@ -127,16 +133,30 @@ The script automatically pulls models optimized for 32GB VRAM:
 
 **Total: ~21GB** - both models fit in VRAM simultaneously, leaving ~11GB for context.
 
-### Integrated Testing
+### Testing (Optional)
 
-After installation, the script runs a 4-phase test:
+By default, the script just sets up containers quickly without waiting for health checks. Use `-Test` to verify your setup:
 
-| Phase | Test | Description |
-|-------|------|-------------|
-| 1 | Model inference | Each model responds to a prompt |
-| 2 | SearXNG check | Verifies search engine returns results |
-| 3 | Web context | Model processes search results |
-| 4 | Log check | Open WebUI shows web search activity |
+```powershell
+.\setup-ollama-websearch.ps1 -Test
+```
+
+The test runs:
+| Test | Description |
+|------|-------------|
+| Container health | Checks all containers are running |
+| Model inference | Each model responds to a prompt |
+| Web endpoints | Verifies Open WebUI, SearXNG, Perplexica respond |
+
+### Troubleshooting
+
+Use `-Diagnose` to troubleshoot connectivity issues:
+
+```powershell
+.\setup-ollama-websearch.ps1 -Diagnose
+```
+
+Shows: container runtime, Ollama status, container status, network config, and logs for unhealthy containers.
 
 ### Container Runtime Detection
 
