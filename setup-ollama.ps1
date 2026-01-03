@@ -78,18 +78,16 @@ Models for 32GB VRAM (Updated Dec 2025):
 
     Coder-Only (-CoderModels):
       - qwen2.5-coder:32b           (~19GB) - Best local coding model
-      - qwen3-coder:30b             (~19GB) - 256K MoE, rivals Claude Sonnet-4
+      - NeuralNexusLab/CodeXor:20b  (~14GB) - Zero-omission, matches o3-mini
+      - NeuralNexusLab/CodeXor:12b  (~9GB)  - Gemma 3 + VISION
       - devstral-small-2            (~15GB) - 384K context, 65.8% SWE-Bench
-      - devstral                    (~14GB) - Agentic coding, 46.8% SWE-Bench
       - mikepfunk28/deepseekq3_coder (~5GB) - DeepSeek Q3 + Qwen3 thinking
       - mikepfunk28/deepseekq3_agent (~5GB) - Agent-focused variant
-      - second_constantine/deepseek-coder-v2:16b (~9GB) - 160K MoE
 
     Additional (-AllModels):
-      - phi4:14b           (~9GB)  - Microsoft's efficient reasoning
-      - gemma3:27b         (~16GB) - Google's latest (outperforms 405B)
-      - codellama:34b      (~20GB) - Meta's coding model
-      - deepseek-coder:33b (~19GB) - Alternative coder (87 languages)
+      - phi4:14b                    (~9GB)  - Microsoft's efficient reasoning
+      - dolphin3:8b                 (~5GB)  - Uncensored, no safety filters
+      - wizard-vicuna-uncensored:13b (~8GB) - Uncensored instruction following
 
 Smart Features:
     - Only installs Ollama if not already present
@@ -203,6 +201,38 @@ function Test-ModelInstalled {
     return $false
 }
 
+# Check if a -5090 optimized version of a model exists
+function Test-OptimizedVersionExists {
+    param([string]$ModelName, [hashtable]$InstalledModels)
+
+    # Build the -5090 variant name
+    # e.g., "qwen2.5-coder:32b" -> "qwen2.5-coder:32b-5090"
+    # e.g., "deepseek-r1:32b" -> "deepseek-r1:32b-5090"
+    if ($ModelName -match "^(.+):(.+)$") {
+        $base = $matches[1]
+        $tag = $matches[2]
+        $optimizedName = "${base}:${tag}-5090"
+    } else {
+        # No tag, add :latest-5090
+        $optimizedName = "${ModelName}:latest-5090"
+    }
+
+    # Check if optimized version exists
+    foreach ($key in $InstalledModels.Keys) {
+        if ($key -eq $optimizedName) {
+            return @{ Exists = $true; Name = $key }
+        }
+        # Also check with normalization
+        $keyLower = $key.ToLower()
+        $optLower = $optimizedName.ToLower()
+        if ($keyLower -eq $optLower) {
+            return @{ Exists = $true; Name = $key }
+        }
+    }
+
+    return @{ Exists = $false; Name = $null }
+}
+
 # Install Ollama
 function Install-Ollama {
     Write-Step "1" "Checking Ollama Installation"
@@ -283,30 +313,22 @@ function Install-Models {
     # Coder-focused models (for -CoderModels flag)
     $coderModels = @(
         @{ Name = "qwen2.5-coder:32b"; Desc = "Best local coding model (rivals GPT-4o)"; Size = "~19GB" },
-        @{ Name = "qwen3-coder:30b"; Desc = "256K MoE, rivals Claude Sonnet-4"; Size = "~19GB" },
         @{ Name = "NeuralNexusLab/CodeXor:20b"; Desc = "GPT-OSS base, zero-omission (no placeholders), matches o3-mini"; Size = "~14GB" },
         @{ Name = "NeuralNexusLab/CodeXor:12b"; Desc = "Gemma 3 + VISION, analyzes screenshots/diagrams"; Size = "~9GB" },
         @{ Name = "devstral-small-2"; Desc = "384K context, vision, 65.8% SWE-Bench"; Size = "~15GB" },
-        @{ Name = "devstral"; Desc = "Agentic coding, 46.8% SWE-Bench"; Size = "~14GB" },
         @{ Name = "mikepfunk28/deepseekq3_coder"; Desc = "DeepSeek Q3 + Qwen3 thinking"; Size = "~5GB" },
-        @{ Name = "mikepfunk28/deepseekq3_agent"; Desc = "Agent-focused variant with tools"; Size = "~5GB" },
-        @{ Name = "second_constantine/deepseek-coder-v2:16b"; Desc = "160K MoE, IQ4_XS quantized"; Size = "~9GB" },
-        @{ Name = "qwen2.5-coder:14b"; Desc = "Efficient coding for medium VRAM"; Size = "~9GB" },
-        @{ Name = "deepseek-coder:33b"; Desc = "Strong coding (87 languages)"; Size = "~19GB" },
-        @{ Name = "codellama:34b"; Desc = "Meta's premier coding model"; Size = "~20GB" }
+        @{ Name = "mikepfunk28/deepseekq3_agent"; Desc = "Agent-focused variant with tools"; Size = "~5GB" }
     )
 
     $extraModels = @(
         @{ Name = "devstral-small-2"; Desc = "384K context, vision, 65.8% SWE-Bench"; Size = "~15GB" },
-        @{ Name = "qwen3-coder:30b"; Desc = "256K MoE, rivals Claude Sonnet-4"; Size = "~19GB" },
-        @{ Name = "devstral"; Desc = "Agentic coding, 46.8% SWE-Bench"; Size = "~14GB" },
         @{ Name = "phi4:14b"; Desc = "Microsoft's efficient reasoning (rivals 70B)"; Size = "~9GB" },
-        @{ Name = "gemma3:27b"; Desc = "Google's latest (outperforms 405B)"; Size = "~16GB" },
-        @{ Name = "codellama:34b"; Desc = "Meta's premier coding model"; Size = "~20GB" },
-        @{ Name = "deepseek-coder:33b"; Desc = "Strong coding alternative (87 langs)"; Size = "~19GB" },
+        @{ Name = "NeuralNexusLab/CodeXor:20b"; Desc = "GPT-OSS base, zero-omission, matches o3-mini"; Size = "~14GB" },
+        @{ Name = "NeuralNexusLab/CodeXor:12b"; Desc = "Gemma 3 + VISION, analyzes screenshots/diagrams"; Size = "~9GB" },
         @{ Name = "mikepfunk28/deepseekq3_coder"; Desc = "Community: DeepSeek Q3 + Qwen3 thinking"; Size = "~5GB" },
         @{ Name = "mikepfunk28/deepseekq3_agent"; Desc = "Community: Agent-focused variant"; Size = "~5GB" },
-        @{ Name = "second_constantine/deepseek-coder-v2:16b"; Desc = "Community: 160K MoE coder"; Size = "~9GB" }
+        @{ Name = "dolphin3:8b"; Desc = "Uncensored helpful assistant, no safety filters"; Size = "~5GB" },
+        @{ Name = "wizard-vicuna-uncensored:13b"; Desc = "Uncensored, strong instruction following"; Size = "~8GB" }
     )
 
     # Select models based on flags
@@ -315,7 +337,7 @@ function Install-Models {
         Write-Info "Minimal mode: Targeting qwen2.5-coder:32b only"
     } elseif ($Coder) {
         $targetModels = $coderModels
-        Write-Info "Coder mode: Targeting 10 coding-focused models"
+        Write-Info "Coder mode: Targeting 6 coding-focused models"
     } elseif ($All) {
         $targetModels = $coreModels + $extraModels + $coderModels
         Write-Info "Full mode: Targeting all recommended models (including coder models)"
@@ -335,12 +357,19 @@ function Install-Models {
     # Determine which models need downloading
     $toDownload = @()
     $alreadyInstalled = @()
+    $hasOptimizedVersion = @()
 
     foreach ($model in $targetModels) {
         if (-not $Force -and (Test-ModelInstalled -ModelName $model.Name -InstalledModels $installedModels)) {
             $alreadyInstalled += $model
         } else {
-            $toDownload += $model
+            # Check if a -5090 optimized version already exists
+            $optimized = Test-OptimizedVersionExists -ModelName $model.Name -InstalledModels $installedModels
+            if (-not $Force -and $optimized.Exists) {
+                $hasOptimizedVersion += @{ Model = $model; OptimizedName = $optimized.Name }
+            } else {
+                $toDownload += $model
+            }
         }
     }
 
@@ -353,9 +382,21 @@ function Install-Models {
         }
     }
 
+    if ($hasOptimizedVersion.Count -gt 0) {
+        Write-Host ""
+        Write-Host "Optimized -5090 version exists (skipping base model):" -ForegroundColor Cyan
+        foreach ($item in $hasOptimizedVersion) {
+            Write-Host "  [5090] $($item.Model.Name) -> $($item.OptimizedName)" -ForegroundColor Cyan
+        }
+    }
+
     if ($toDownload.Count -eq 0) {
         Write-Host ""
-        Write-Success "All target models are already installed!"
+        if ($hasOptimizedVersion.Count -gt 0) {
+            Write-Success "All target models covered! ($($alreadyInstalled.Count) installed, $($hasOptimizedVersion.Count) have optimized -5090 versions)"
+        } else {
+            Write-Success "All target models are already installed!"
+        }
         return $true
     }
 
@@ -389,9 +430,10 @@ function Install-Models {
 
     Write-Host ""
     Write-Success "Downloaded $successCount of $totalToDownload models"
-    Write-Info "Total models now available: $($alreadyInstalled.Count + $successCount)"
+    $totalSkipped = $alreadyInstalled.Count + $hasOptimizedVersion.Count
+    Write-Info "Total models now available: $($totalSkipped + $successCount) (including $($hasOptimizedVersion.Count) optimized -5090 variants)"
 
-    return $successCount -gt 0 -or $alreadyInstalled.Count -gt 0
+    return $successCount -gt 0 -or $alreadyInstalled.Count -gt 0 -or $hasOptimizedVersion.Count -gt 0
 }
 
 # Configure .env file
