@@ -528,6 +528,23 @@ During setup, we encountered and fixed:
 
 **Full documentation:** See [website/docs/tools/codex-cli.md](website/docs/tools/codex-cli.md) for complete setup guide including troubleshooting.
 
+### Uninstall
+
+To completely remove Codex CLI:
+
+```powershell
+# Interactive (asks for confirmation)
+.\uninstall-codex.ps1
+
+# Force uninstall (no prompts)
+.\uninstall-codex.ps1 -Force
+```
+
+This removes:
+- NPM package `@openai/codex-cli`
+- Configuration directory `~/.codex` (includes history, sessions, config)
+- All related files
+
 ## Requirements
 
 - Windows 10/11 (64-bit)
