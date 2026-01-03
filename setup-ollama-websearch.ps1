@@ -1305,7 +1305,7 @@ function Invoke-Tests {
             if ($health.Healthy) {
                 Write-Success "$container is healthy"
             } else {
-                Write-Warn "$container: $($health.Reason)"
+                Write-Warn "${container}: $($health.Reason)"
                 $allPassed = $false
             }
         }
