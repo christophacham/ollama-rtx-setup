@@ -1,7 +1,6 @@
 # Codex CLI Configuration for Virtual Environment (Non-Conda)
-# Copy to: C:\Users\YOUR_USERNAME\.codex\config.toml
-#
-# IMPORTANT: Replace YOUR_USERNAME with your actual Windows username!
+# Copy to: C:\Users\Egusto\.codex\config.toml
+# Or for others: Replace "Egusto" with your Windows username
 #
 # Quick usage:
 #   codex                    → Default (qwen2.5-coder:32b-5090)
@@ -85,8 +84,8 @@ model = "mikepfunk28/deepseekq3_agent:latest"
 [[mcp_servers]]
 name = "pal"
 transport = "stdio"
-command = "C:\\Users\\YOUR_USERNAME\\code\\pal-mcp-server\\.pal_venv\\Scripts\\python.exe"
-args = ["C:\\Users\\YOUR_USERNAME\\code\\pal-mcp-server\\server.py"]
+command = "C:\\Users\\Egusto\\code\\pal-mcp-server\\.pal_venv\\Scripts\\python.exe"
+args = ["C:\\Users\\Egusto\\code\\pal-mcp-server\\server.py"]
 tool_timeout_sec = 1200  # 20 minutes for PAL tool execution
 
 [mcp_servers.pal.env]

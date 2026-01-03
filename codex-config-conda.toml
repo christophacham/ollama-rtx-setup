@@ -1,7 +1,6 @@
 # Codex CLI Configuration for Windows + Conda
-# Copy to: C:\Users\YOUR_USERNAME\.codex\config.toml
-#
-# IMPORTANT: Replace YOUR_USERNAME with your actual Windows username!
+# Copy to: C:\Users\Egusto\.codex\config.toml
+# Or for others: Replace "Egusto" with your Windows username
 #
 # Quick usage:
 #   codex                    → Default (qwen2.5-coder:32b-5090)
@@ -96,14 +95,14 @@ model = "mikepfunk28/deepseekq3_agent:latest"
 
 # PAL MCP Server - Multi-model orchestration via Conda
 [mcp_servers.pal]
-command = "C:\\Users\\YOUR_USERNAME\\anaconda3\\condabin\\conda.bat"
+command = "C:\\Users\\Egusto\\anaconda3\\condabin\\conda.bat"
 args = [
     "run",
     "-n",
     "pal-mcp",
     "--no-capture-output",
     "python",
-    "C:\\Users\\YOUR_USERNAME\\code\\pal-mcp-server\\server.py"
+    "C:\\Users\\Egusto\\code\\pal-mcp-server\\server.py"
 ]
 
 # Timeouts - from official PAL guide

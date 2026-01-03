@@ -1,14 +1,14 @@
 {
   "mcpServers": {
     "pal": {
-      "command": "C:\\Users\\YOUR_USERNAME\\anaconda3\\condabin\\conda.bat",
+      "command": "C:\\Users\\Egusto\\anaconda3\\condabin\\conda.bat",
       "args": [
         "run",
         "-n",
         "pal-mcp",
         "--no-capture-output",
         "python",
-        "C:\\Users\\YOUR_USERNAME\\code\\pal-mcp-server\\server.py"
+        "C:\\Users\\Egusto\\code\\pal-mcp-server\\server.py"
       ],
       "env": {
         "OLLAMA_BASE_URL": "http://localhost:11434",
