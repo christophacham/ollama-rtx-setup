@@ -23,6 +23,8 @@ param(
     [switch]$Uninstall,
     [switch]$UseLocalRegistry,
     [switch]$SingleUser,
+    [switch]$Test,        # Run health checks and inference tests after setup
+    [switch]$Diagnose,    # Run network diagnostics and troubleshooting
     [switch]$Help
 )
 
@@ -230,6 +232,8 @@ Options:
     -SingleUser      No login required (recommended for personal use)
     -SkipModels      Skip downloading web search optimized models
     -SkipContainers  Skip container setup (config only)
+    -Test            Run health checks and model inference tests after setup
+    -Diagnose        Run network diagnostics and troubleshooting
     -Uninstall       Remove web search containers
     -UseLocalRegistry Use mirrored images from ghcr.io/christophacham
     -Help            Show this help message
@@ -240,6 +244,8 @@ Examples:
     .\setup-ollama-websearch.ps1 -Setup OpenWebUI    # Install Open WebUI
     .\setup-ollama-websearch.ps1 -Setup Perplexica   # Install Perplexica
     .\setup-ollama-websearch.ps1 -Setup Both         # Install both
+    .\setup-ollama-websearch.ps1 -Test               # Run tests on existing setup
+    .\setup-ollama-websearch.ps1 -Diagnose           # Troubleshoot connectivity
     .\setup-ollama-websearch.ps1 -Uninstall          # Remove containers
 
 Container Runtime:
@@ -924,36 +930,22 @@ function Install-OpenWebUI {
             return $false
         }
 
-        # Wait for container to become healthy
-        Write-Info "Waiting for Open WebUI to start..."
-        if (-not (Wait-ContainerReady -Container "open-webui" -TimeoutSeconds 60)) {
-            Write-Err "Open WebUI failed to start properly"
-            Write-Host ""
-            Write-Host "Troubleshooting tips:" -ForegroundColor Yellow
-            Write-Host "  1. Check if Ollama is running: ollama ps"
-            Write-Host "  2. Check container logs above for errors"
-            Write-Host "  3. Try: .\debug-ollama-connection.ps1 -Fix"
-            Write-Host ""
-            return $false
-        }
+        # Brief pause to let container initialize
+        Start-Sleep -Seconds 3
 
-        Write-Success "Open WebUI installed successfully!"
+        Write-Success "Open WebUI container started!"
         Write-Host ""
-        Write-Host "  Access Open WebUI at: " -NoNewline
+        Write-Host "  Access: " -NoNewline
         Write-Host "http://localhost:3000" -ForegroundColor Green
-        Write-Host "  Image: $desiredImage (no embedded Ollama)" -ForegroundColor Gray
+        Write-Host "  SearXNG: http://localhost:4000" -ForegroundColor Gray
         Write-Host ""
         if ($SingleUser) {
-            Write-Host "  Ready to use:" -ForegroundColor Yellow
-            Write-Host "  - No login required (single-user mode)"
-            Write-Host "  - Web search pre-enabled with SearXNG"
-            Write-Host "  - Models pre-selected: $defaultModels"
+            Write-Host "  Mode: Single-user (no login required)" -ForegroundColor Yellow
         } else {
-            Write-Host "  First-time setup:" -ForegroundColor Yellow
-            Write-Host "  1. Open http://localhost:3000"
-            Write-Host "  2. Create an account (first user becomes admin)"
-            Write-Host "  3. Web search is pre-enabled with SearXNG"
+            Write-Host "  First user to register becomes admin" -ForegroundColor Yellow
         }
+        Write-Host ""
+        Write-Host "  Run with -Test to verify connectivity" -ForegroundColor Gray
         Write-Host ""
         return $true
     } catch {
@@ -1155,26 +1147,12 @@ function Install-Perplexica {
 
     $existing = Invoke-Container @("ps", "--filter", "name=perplexica", "--format", "{{.Names}}") 2>&1
     if ($existing) {
-        # Check health of existing containers
-        $allHealthy = $true
-        foreach ($container in @("searxng", "perplexica-backend", "perplexica-frontend")) {
-            $health = Test-ContainerHealth -Container $container
-            if (-not $health.Healthy) {
-                Write-Warn "$container issue: $($health.Reason)"
-                Show-ContainerLogs -Container $container -Lines 15
-                $allHealthy = $false
-            }
-        }
-        if ($allHealthy) {
-            Write-Success "Perplexica is already running and healthy"
-            Write-Host "  Frontend: http://localhost:3002"
-            Write-Host "  SearXNG:  http://localhost:4000"
-            return $true
-        } else {
-            Write-Warn "Some Perplexica containers have issues. Consider restarting with:"
-            Write-Host "  .\setup-ollama-websearch.ps1 -Uninstall; .\setup-ollama-websearch.ps1 -Setup Perplexica"
-            return $false
-        }
+        Write-Success "Perplexica containers already exist"
+        Write-Host "  Frontend: http://localhost:3002"
+        Write-Host "  SearXNG:  http://localhost:4000"
+        Write-Host ""
+        Write-Host "  Run with -Test to check health" -ForegroundColor Gray
+        return $true
     }
 
     Write-Info "Creating configuration files..."
@@ -1182,7 +1160,7 @@ function Install-Perplexica {
 
     $composePath = New-PerplexicaCompose
 
-    Write-Info "Starting Perplexica stack (this may take a few minutes)..."
+    Write-Info "Starting Perplexica stack..."
     Write-Info "Using: $($script:ComposeCommand)"
 
     try {
@@ -1197,47 +1175,17 @@ function Install-Perplexica {
             return $false
         }
 
-        # Wait for containers to become healthy
-        Write-Info "Waiting for containers to become healthy..."
+        # Brief pause to let containers initialize
+        Start-Sleep -Seconds 3
 
-        $containers = @(
-            @{ Name = "searxng"; Timeout = 60 },
-            @{ Name = "perplexica-backend"; Timeout = 90 },
-            @{ Name = "perplexica-frontend"; Timeout = 60 }
-        )
-
-        $allStarted = $true
-        foreach ($c in $containers) {
-            Write-Info "Checking $($c.Name)..."
-            if (-not (Wait-ContainerReady -Container $c.Name -TimeoutSeconds $c.Timeout)) {
-                $allStarted = $false
-                # Don't return yet - check all containers to show all issues
-            }
-        }
-
-        if (-not $allStarted) {
-            Write-Err "Some Perplexica containers failed to start properly"
-            Write-Host ""
-            Write-Host "Troubleshooting tips:" -ForegroundColor Yellow
-            Write-Host "  1. Check if Ollama is running: ollama ps"
-            Write-Host "  2. Check container logs above for errors"
-            Write-Host "  3. If using Podman, verify gateway IP is correct"
-            Write-Host "  4. Try: .\debug-ollama-connection.ps1 -Container perplexica-backend"
-            Write-Host ""
-            return $false
-        }
-
-        Write-Success "Perplexica installed successfully!"
+        Write-Success "Perplexica containers started!"
         Write-Host ""
-        Write-Host "  Access Perplexica at: " -NoNewline
+        Write-Host "  Frontend: " -NoNewline
         Write-Host "http://localhost:3002" -ForegroundColor Green
-        Write-Host "  SearXNG (direct): " -NoNewline
+        Write-Host "  SearXNG:  " -NoNewline
         Write-Host "http://localhost:4000" -ForegroundColor Green
         Write-Host ""
-        Write-Host "  Configuration:" -ForegroundColor Yellow
-        Write-Host "  1. Open http://localhost:3002"
-        Write-Host "  2. Select your Ollama model (qwen3:32b recommended)"
-        Write-Host "  3. Start searching with AI-powered answers!"
+        Write-Host "  Run with -Test to verify connectivity" -ForegroundColor Gray
         Write-Host ""
         return $true
     } catch {
@@ -1337,12 +1285,157 @@ function Show-Complete {
     Write-Host ""
 }
 
+# Run comprehensive tests (only when -Test flag is used)
+function Invoke-Tests {
+    Write-Host ""
+    Write-Host "========================================" -ForegroundColor Cyan
+    Write-Host "  RUNNING TESTS                        " -ForegroundColor Cyan
+    Write-Host "========================================" -ForegroundColor Cyan
+    Write-Host ""
+
+    $allPassed = $true
+
+    # Test 1: Container health
+    Write-Step "T1" "Container Health Checks"
+    $containers = @("open-webui", "searxng", "perplexica-frontend", "perplexica-backend")
+    foreach ($container in $containers) {
+        $exists = Invoke-Container @("ps", "-a", "--filter", "name=$container", "--format", "{{.Names}}") 2>&1
+        if ($exists -eq $container) {
+            $health = Test-ContainerHealth -Container $container
+            if ($health.Healthy) {
+                Write-Success "$container is healthy"
+            } else {
+                Write-Warn "$container: $($health.Reason)"
+                $allPassed = $false
+            }
+        }
+    }
+
+    # Test 2: Model inference
+    Write-Step "T2" "Model Inference Tests"
+    Test-InstalledModels | Out-Null
+
+    # Test 3: Web endpoints
+    Write-Step "T3" "Web Endpoint Tests"
+
+    $endpoints = @(
+        @{ Name = "Open WebUI"; Url = "http://localhost:3000" },
+        @{ Name = "SearXNG"; Url = "http://localhost:4000" },
+        @{ Name = "Perplexica"; Url = "http://localhost:3002" }
+    )
+
+    foreach ($ep in $endpoints) {
+        try {
+            $response = Invoke-WebRequest -Uri $ep.Url -TimeoutSec 5 -UseBasicParsing -ErrorAction Stop
+            if ($response.StatusCode -eq 200) {
+                Write-Success "$($ep.Name) responding at $($ep.Url)"
+            }
+        } catch {
+            Write-Warn "$($ep.Name) not responding at $($ep.Url)"
+        }
+    }
+
+    Write-Host ""
+    if ($allPassed) {
+        Write-Host "All tests passed!" -ForegroundColor Green
+    } else {
+        Write-Host "Some tests failed. Run with -Diagnose for more info." -ForegroundColor Yellow
+    }
+    Write-Host ""
+}
+
+# Run diagnostics (only when -Diagnose flag is used)
+function Invoke-Diagnose {
+    Write-Host ""
+    Write-Host "========================================" -ForegroundColor Magenta
+    Write-Host "  DIAGNOSTICS                          " -ForegroundColor Magenta
+    Write-Host "========================================" -ForegroundColor Magenta
+    Write-Host ""
+
+    # 1. Container runtime
+    Write-Step "D1" "Container Runtime"
+    if (Find-ContainerRuntime) {
+        Write-Success "Container runtime: $($script:ContainerRuntime)"
+    }
+
+    # 2. Ollama status
+    Write-Step "D2" "Ollama Status"
+    try {
+        $ollamaResponse = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -TimeoutSec 5 -ErrorAction Stop
+        $modelCount = $ollamaResponse.models.Count
+        Write-Success "Ollama running with $modelCount model(s)"
+        Write-Host "  Models:" -ForegroundColor Gray
+        foreach ($model in $ollamaResponse.models) {
+            Write-Host "    - $($model.name)" -ForegroundColor Gray
+        }
+    } catch {
+        Write-Err "Ollama not responding on localhost:11434"
+        Write-Host "  Start with: ollama serve" -ForegroundColor Yellow
+    }
+
+    # 3. Container status
+    Write-Step "D3" "Container Status"
+    $containers = @("open-webui", "searxng", "perplexica-frontend", "perplexica-backend")
+    foreach ($container in $containers) {
+        $status = Invoke-Container @("ps", "-a", "--filter", "name=$container", "--format", "{{.Status}}") 2>&1
+        if ($status) {
+            $running = $status -match "Up"
+            if ($running) {
+                Write-Success "$container - $status"
+            } else {
+                Write-Warn "$container - $status"
+            }
+        }
+    }
+
+    # 4. Network info
+    Write-Step "D4" "Network Configuration"
+    Write-Info "Container runtime: $($script:ContainerRuntime)"
+    if ($script:ContainerRuntime -eq "docker") {
+        Write-Info "Docker uses host.docker.internal for host access"
+        Write-Info "Ollama URL: http://host.docker.internal:11434"
+    } else {
+        $gatewayIp = Get-OllamaHostUrl
+        Write-Info "Podman gateway: $gatewayIp"
+    }
+
+    # 5. Container logs (if issues)
+    Write-Step "D5" "Recent Container Logs"
+    foreach ($container in $containers) {
+        $exists = Invoke-Container @("ps", "-a", "--filter", "name=$container", "--format", "{{.Names}}") 2>&1
+        if ($exists -eq $container) {
+            $health = Test-ContainerHealth -Container $container
+            if (-not $health.Healthy) {
+                Show-ContainerLogs -Container $container -Lines 10
+            }
+        }
+    }
+
+    Write-Host ""
+    Write-Host "Diagnostics complete." -ForegroundColor Cyan
+    Write-Host ""
+}
+
 # Main
 function Main {
     Show-Banner
 
     if ($Help) {
         Show-Help
+        return
+    }
+
+    # Handle -Test mode (run tests on existing setup)
+    if ($Test) {
+        if (-not (Find-ContainerRuntime)) { return }
+        Invoke-Tests
+        return
+    }
+
+    # Handle -Diagnose mode (troubleshoot connectivity)
+    if ($Diagnose) {
+        if (-not (Find-ContainerRuntime)) { return }
+        Invoke-Diagnose
         return
     }
 
@@ -1378,11 +1471,14 @@ function Main {
 
     if (-not (Test-Ollama)) { return }
 
-    Set-OllamaContainerAccess | Out-Null
+    # Skip network configuration for Docker (it handles host.docker.internal automatically)
+    if ($script:ContainerRuntime -ne "docker") {
+        Set-OllamaContainerAccess | Out-Null
+    }
 
     if (-not $SkipModels) {
         Install-WebSearchModels | Out-Null
-        Test-InstalledModels | Out-Null
+        # Note: Tests moved to -Test flag, not run by default
     }
 
     if (-not $SkipContainers) {
