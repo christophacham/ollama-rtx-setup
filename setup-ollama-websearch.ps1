@@ -84,6 +84,50 @@ function Write-Info { param($msg) Write-Host "[INFO] $msg" -ForegroundColor Cyan
 function Write-Warn { param($msg) Write-Host "[WARN] $msg" -ForegroundColor Yellow }
 function Write-Err { param($msg) Write-Host "[ERROR] $msg" -ForegroundColor Red }
 function Write-Step { param($step, $msg) Write-Host "`n=== Step $step : $msg ===" -ForegroundColor Magenta }
+function Write-Skip { param($msg) Write-Host "[SKIP] $msg" -ForegroundColor DarkGray }
+
+# Check if a -5090 optimized version of a model exists
+function Test-OptimizedVersionExists {
+    param([string]$ModelName)
+
+    try {
+        $listOutput = ollama list 2>&1
+        if ($LASTEXITCODE -ne 0) { return @{ Exists = $false; Name = $null } }
+
+        # Build the -5090 variant name
+        if ($ModelName -match "^(.+):(.+)$") {
+            $base = $matches[1]
+            $tag = $matches[2]
+            $optimizedName = "${base}:${tag}-5090"
+        } else {
+            $optimizedName = "${ModelName}:latest-5090"
+        }
+
+        # Check if optimized version exists in list
+        $lines = $listOutput -split "`n" | Select-Object -Skip 1
+        foreach ($line in $lines) {
+            if ($line -match "^(\S+)") {
+                $installedModel = $matches[1]
+                if ($installedModel -eq $optimizedName -or $installedModel.ToLower() -eq $optimizedName.ToLower()) {
+                    return @{ Exists = $true; Name = $installedModel }
+                }
+            }
+        }
+    } catch {}
+
+    return @{ Exists = $false; Name = $null }
+}
+
+# Get the best available model (prefer -5090 variant if exists)
+function Get-BestModelVariant {
+    param([string]$ModelName)
+
+    $optimized = Test-OptimizedVersionExists -ModelName $ModelName
+    if ($optimized.Exists) {
+        return $optimized.Name
+    }
+    return $ModelName
+}
 
 # Container health checking functions
 function Test-ContainerHealth {
@@ -385,6 +429,7 @@ function Set-OllamaContainerAccess {
 function Install-WebSearchModels {
     Write-Step "4" "Installing Web Search Optimized Models"
 
+    # Base models - script will check for -5090 variants automatically
     $models = @(
         @{ Name = "qwen2.5:3b"; Desc = "Fast web search queries"; Size = "~4GB" },
         @{ Name = "qwen2.5-coder:14b"; Desc = "Synthesis and code"; Size = "~17GB" }
@@ -392,6 +437,7 @@ function Install-WebSearchModels {
 
     Write-Host "`nDownloading models optimized for RTX 5090 (32GB VRAM):" -ForegroundColor Yellow
     Write-Host "  Total VRAM: ~21GB | Remaining for context: ~11GB" -ForegroundColor Gray
+    Write-Host "  Note: Will use -5090 variants if available" -ForegroundColor Gray
     Write-Host ""
     foreach ($model in $models) {
         Write-Host "  - $($model.Name) $($model.Size) - $($model.Desc)"
@@ -399,7 +445,14 @@ function Install-WebSearchModels {
     Write-Host ""
 
     foreach ($model in $models) {
-        Write-Info "Downloading $($model.Name)..."
+        # Check if -5090 optimized version exists
+        $optimized = Test-OptimizedVersionExists -ModelName $model.Name
+        if ($optimized.Exists) {
+            Write-Skip "$($model.Name) -> using optimized $($optimized.Name)"
+            continue
+        }
+
+        Write-Info "Checking $($model.Name)..."
 
         try {
             $installed = ollama list 2>&1 | Select-String $model.Name
@@ -408,6 +461,7 @@ function Install-WebSearchModels {
                 continue
             }
 
+            Write-Info "Downloading $($model.Name)..."
             $process = Start-Process -FilePath "ollama" -ArgumentList "pull $($model.Name)" -Wait -PassThru -NoNewWindow
             if ($process.ExitCode -eq 0) {
                 Write-Success "$($model.Name) downloaded successfully"
@@ -477,11 +531,21 @@ function Test-SearXNG {
 function Test-InstalledModels {
     Write-Step "4b" "Testing Models & Web Search"
 
-    $models = @("qwen2.5:3b", "qwen2.5-coder:14b")
+    # Base models - will use -5090 variants if available
+    $baseModels = @("qwen2.5:3b", "qwen2.5-coder:14b")
+
+    # Get best available variant for each model
+    $models = @()
+    foreach ($base in $baseModels) {
+        $best = Get-BestModelVariant -ModelName $base
+        $models += $best
+    }
+
     $passed = 0
 
     Write-Host ""
     Write-Host "Running inference test on each model..." -ForegroundColor Gray
+    Write-Host "  (Using -5090 variants where available)" -ForegroundColor Gray
     Write-Host ""
 
     # Phase 1: Basic inference test

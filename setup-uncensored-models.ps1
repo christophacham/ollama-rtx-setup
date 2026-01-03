@@ -25,6 +25,32 @@ function Write-Warn { param($msg) Write-Host "[WARN] $msg" -ForegroundColor Yell
 function Write-Err { param($msg) Write-Host "[ERROR] $msg" -ForegroundColor Red }
 function Write-Skip { param($msg) Write-Host "[SKIP] $msg" -ForegroundColor DarkGray }
 
+# Check if a -5090 optimized version of a model exists
+function Test-OptimizedVersionExists {
+    param([string]$ModelName, [hashtable]$InstalledModels)
+
+    # Build the -5090 variant name
+    if ($ModelName -match "^(.+):(.+)$") {
+        $base = $matches[1]
+        $tag = $matches[2]
+        $optimizedName = "${base}:${tag}-5090"
+    } else {
+        $base = ($ModelName -split ":")[0]
+        $optimizedName = "${base}:latest-5090"
+        $optimizedName2 = "${base}-5090"
+    }
+
+    # Check if optimized version exists
+    foreach ($key in $InstalledModels.Keys) {
+        if ($key -eq $optimizedName -or $key -eq $optimizedName2 -or
+            $key.ToLower() -eq $optimizedName.ToLower()) {
+            return @{ Exists = $true; Name = $key }
+        }
+    }
+
+    return @{ Exists = $false; Name = $null }
+}
+
 # Banner
 function Show-Banner {
     Write-Host @"
@@ -125,13 +151,19 @@ function Get-InstalledModels {
     return $installed
 }
 
-# Check if model is installed (with fuzzy matching)
+# Check if model is installed (with fuzzy matching and -5090 variant check)
 function Test-ModelInstalled {
     param([string]$ModelName, [hashtable]$InstalledModels)
 
     # Direct match
     if ($InstalledModels.ContainsKey($ModelName)) {
-        return $true
+        return @{ Installed = $true; Variant = $null }
+    }
+
+    # Check if -5090 optimized version exists
+    $optimized = Test-OptimizedVersionExists -ModelName $ModelName -InstalledModels $InstalledModels
+    if ($optimized.Exists) {
+        return @{ Installed = $true; Variant = $optimized.Name }
     }
 
     # Try matching base name with any tag
@@ -142,15 +174,15 @@ function Test-ModelInstalled {
         $modelTag = if ($ModelName -match ":(.+)$") { $matches[1] } else { "latest" }
 
         if ($keyBase -eq $modelBase -and $keyTag -eq $modelTag) {
-            return $true
+            return @{ Installed = $true; Variant = $null }
         }
         # Also match if just base names match and we're looking for latest
         if ($keyBase -eq $modelBase -and $modelTag -eq "latest" -and $key -eq $keyBase) {
-            return $true
+            return @{ Installed = $true; Variant = $null }
         }
     }
 
-    return $false
+    return @{ Installed = $false; Variant = $null }
 }
 
 # Main execution
@@ -246,7 +278,9 @@ function Main {
     $alreadyInstalled = @()
 
     foreach ($model in $uncensoredModels) {
-        if (-not $ForceDownload -and (Test-ModelInstalled -ModelName $model.Name -InstalledModels $installedModels)) {
+        $check = Test-ModelInstalled -ModelName $model.Name -InstalledModels $installedModels
+        if (-not $ForceDownload -and $check.Installed) {
+            $model.Variant = $check.Variant  # Store variant info if using -5090 version
             $alreadyInstalled += $model
         } else {
             $toDownload += $model
@@ -258,7 +292,11 @@ function Main {
     if ($alreadyInstalled.Count -gt 0) {
         Write-Host "Already installed (skipping):" -ForegroundColor Green
         foreach ($model in $alreadyInstalled) {
-            Write-Host "  [OK] $($model.Name)" -ForegroundColor Green
+            if ($model.Variant) {
+                Write-Host "  [OK] $($model.Name) -> using $($model.Variant)" -ForegroundColor Green
+            } else {
+                Write-Host "  [OK] $($model.Name)" -ForegroundColor Green
+            }
         }
     }
 
