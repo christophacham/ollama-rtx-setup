@@ -450,6 +450,84 @@ If you prefer manual configuration, copy `custom_models.json` to PAL:
 Copy-Item custom_models.json "C:\path\to\pal-mcp-server\conf\"
 ```
 
+## Codex CLI Integration
+
+[OpenAI Codex CLI](https://developers.openai.com/codex) is a terminal-based AI assistant that works with PAL MCP for multi-model orchestration of your local Ollama models.
+
+### Why Codex CLI + PAL?
+
+| Feature | Open WebUI | Codex CLI + PAL |
+|---------|------------|-----------------|
+| Interface | Browser | Terminal |
+| Model switching | Manual dropdown | Automatic routing |
+| Multi-model | Single at a time | Consensus workflows |
+| Web search | SearXNG injection | Native + orchestrated |
+| Use case | Chat, experimentation | Coding, automation, CI/CD |
+
+### Quick Setup
+
+```powershell
+# 1. Install Codex CLI
+npm install -g @openai/codex-cli
+
+# 2. Copy the appropriate config
+#    For conda users:
+cp codex-config-conda.toml ~/.codex/config.toml
+
+#    For venv users:
+cp codex-config-venv.toml ~/.codex/config.toml
+
+# 3. Edit config and replace YOUR_USERNAME with your actual username
+
+# 4. Test it
+codex
+/mcp   # Should show PAL with all 18 tools
+```
+
+### Configuration Files
+
+| File | Purpose |
+|------|---------|
+| `codex-config-conda.toml` | **Conda setup** - Uses conda.bat to activate pal-mcp environment |
+| `codex-config-venv.toml` | **Virtual env setup** - Points directly to Python in .pal_venv |
+
+**Key Differences:**
+- **Conda**: Shares environment with Claude Desktop, slower startup (~10-30s), better isolation
+- **Venv**: Faster startup (~1-2s), lighter weight, standard Python approach
+
+### Usage Examples
+
+```powershell
+# Default model (qwen2.5-coder:32b-5090)
+codex
+> Write tests for auth.py
+
+# Quick queries with fast model
+codex -p fast
+> What's new in Python 3.13?
+
+# Deep reasoning
+codex -p deepseek
+> Debug this memory leak step by step
+
+# PAL integration
+codex
+> Use pal codereview to review src/main.rs
+> Use pal consensus with fast and deepseek to evaluate this design
+```
+
+### Common Issues Fixed
+
+During setup, we encountered and fixed:
+
+1. **`wire_api` deprecation** → Set `wire_api = "responses"` (not `"chat"`)
+2. **Invalid `history.persistence`** → Use `"save-all"` (not `"local"`)
+3. **Terminal display garbled** → Use Windows Terminal or increase PowerShell window width
+4. **Web search deprecated** → Use `[features] web_search_request = true`
+5. **Slow PowerShell startup** → Create alias `function cx { codex.exe $args }`
+
+**Full documentation:** See [website/docs/tools/codex-cli.md](website/docs/tools/codex-cli.md) for complete setup guide including troubleshooting.
+
 ## Requirements
 
 - Windows 10/11 (64-bit)
