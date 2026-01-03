@@ -1,6 +1,6 @@
-# Complete Setup Guide: Claude Desktop, Codex CLI, and Gemini CLI with PAL MCP
+# Complete Setup Guide: Claude Desktop, Codex CLI, Gemini CLI, and Copilot CLI with PAL MCP
 
-This document provides a comprehensive guide for setting up all three AI CLIs (Claude Desktop, Codex CLI, and Gemini CLI) to work with PAL MCP Server using a shared conda environment and local Ollama models.
+This document provides a comprehensive guide for setting up all four AI CLIs (Claude Desktop, Codex CLI, Gemini CLI, and GitHub Copilot CLI) to work with PAL MCP Server using a shared conda environment and local Ollama models.
 
 ## Table of Contents
 
@@ -10,16 +10,17 @@ This document provides a comprehensive guide for setting up all three AI CLIs (C
 4. [Claude Desktop Configuration](#claude-desktop-configuration)
 5. [Codex CLI Configuration](#codex-cli-configuration)
 6. [Gemini CLI Configuration](#gemini-cli-configuration)
-7. [Configuration Files Reference](#configuration-files-reference)
-8. [Verification & Testing](#verification--testing)
-9. [Troubleshooting](#troubleshooting)
-10. [Issues Fixed During Setup](#issues-fixed-during-setup)
+7. [Copilot CLI Configuration](#copilot-cli-configuration)
+8. [Configuration Files Reference](#configuration-files-reference)
+9. [Verification & Testing](#verification--testing)
+10. [Troubleshooting](#troubleshooting)
+11. [Issues Fixed During Setup](#issues-fixed-during-setup)
 
 ---
 
 ## Overview
 
-This setup enables **three AI CLIs** to orchestrate your local Ollama models through a **single PAL MCP Server instance** running in a **shared conda environment**.
+This setup enables **four AI CLIs** to orchestrate your local Ollama models through a **single PAL MCP Server instance** running in a **shared conda environment**.
 
 ### Architecture
 
@@ -44,9 +45,9 @@ This setup enables **three AI CLIs** to orchestrate your local Ollama models thr
 │     │  • ... and more                            │          │
 │     └────────────────────────────────────────────┘          │
 └─────────────────────────────────────────────────────────────┘
-         ↑              ↑              ↑
-    Claude Desktop  Codex CLI    Gemini CLI
-    (Browser UI)    (Terminal)   (Terminal)
+         ↑              ↑              ↑              ↑
+    Claude Desktop  Codex CLI    Gemini CLI    Copilot CLI
+    (Browser UI)    (Terminal)   (Terminal)    (Terminal)
 ```
 
 ### Why This Setup?
@@ -474,6 +475,169 @@ gemini -m gemini-2.5-pro "Explain async programming"
 
 ---
 
+## Copilot CLI Configuration
+
+GitHub Copilot CLI is GitHub's command-line AI assistant that supports MCP servers for extended functionality.
+
+### Installation
+
+```powershell
+# Install globally via npm
+npm install -g @github/copilot
+
+# Verify installation
+copilot --version
+# Output: 0.0.374
+```
+
+### Configuration File Location
+
+```
+C:\Users\Egusto\.copilot\mcp-config.json
+```
+
+### Method A: Conda Configuration (Recommended)
+
+Create `~/.copilot/mcp-config.json` with the following content:
+
+```json
+{
+  "mcpServers": {
+    "pal": {
+      "type": "local",
+      "command": "C:\\Users\\Egusto\\anaconda3\\condabin\\conda.bat",
+      "tools": ["*"],
+      "args": [
+        "run",
+        "-n",
+        "pal-mcp",
+        "--no-capture-output",
+        "python",
+        "C:\\Users\\Egusto\\code\\pal-mcp-server\\server.py"
+      ],
+      "env": {
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "DEFAULT_MODEL": "auto"
+      }
+    }
+  }
+}
+```
+
+### Method B: Virtual Environment Configuration
+
+For users without conda, use the venv approach:
+
+```json
+{
+  "mcpServers": {
+    "pal": {
+      "type": "local",
+      "command": "C:\\Users\\Egusto\\code\\pal-mcp-server\\.pal_venv\\Scripts\\python.exe",
+      "tools": ["*"],
+      "args": [
+        "C:\\Users\\Egusto\\code\\pal-mcp-server\\server.py"
+      ],
+      "env": {
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "DEFAULT_MODEL": "auto"
+      }
+    }
+  }
+}
+```
+
+### Key Configuration Notes
+
+**Important:** Copilot CLI MCP config requires:
+
+1. **`"type": "local"`** - Specifies this is a local command (not HTTP/SSE)
+2. **`"tools": ["*"]`** - **REQUIRED!** Must specify which tools to enable (`["*"]` for all)
+3. **`"command"`** - The executable to run
+4. **`"args"`** - Arguments passed to the command
+
+**Common Error:** If you forget `"tools": ["*"]`, you'll get:
+```
+Failed to start MCP Servers: ... "tools" ... "message": "Required"
+```
+
+### Setup Steps
+
+1. **Create the .copilot directory (if needed):**
+   ```powershell
+   New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.copilot"
+   ```
+
+2. **Copy the template config:**
+   ```powershell
+   # From this repo (choose one):
+   cd C:\Users\Egusto\code\ollama-rtx-setup
+
+   # For conda users:
+   Copy-Item copilot-mcp-config-conda.json "$env:USERPROFILE\.copilot\mcp-config.json"
+
+   # For venv users:
+   Copy-Item copilot-mcp-config-venv.json "$env:USERPROFILE\.copilot\mcp-config.json"
+   ```
+
+3. **Verify the paths match your setup** (should already be correct)
+
+### Verification
+
+```powershell
+# Launch Copilot CLI
+copilot
+
+# Should show:
+# ● Configured MCP servers: pal
+# ● Connected to GitHub MCP Server
+```
+
+### Usage Examples
+
+```powershell
+# Interactive mode
+copilot
+> Use pal to list available models
+
+# Allow PAL tools without prompting
+copilot --allow-tool 'pal'
+> Use pal thinkdeep to analyze this code
+
+# Non-interactive with tool approval
+copilot -p "Use pal codereview to review main.py" --allow-tool 'pal'
+
+# YOLO mode (auto-approve all tools)
+copilot --allow-all-tools
+> Use pal consensus with fast and deepseek to evaluate this API
+
+# With specific model
+copilot --model claude-opus-4.5
+> Use pal to debug this memory issue
+```
+
+### Available Models in Copilot CLI
+
+| Model | Provider | Best For |
+|-------|----------|----------|
+| `gpt-5.1-codex-max` | OpenAI | Best coding (default) |
+| `gpt-5.1-codex` | OpenAI | Fast coding |
+| `gpt-5.2` | OpenAI | Latest GPT |
+| `claude-opus-4.5` | Anthropic | Complex reasoning |
+| `claude-sonnet-4.5` | Anthropic | Balanced |
+| `gemini-3-pro-preview` | Google | Google's latest |
+
+### Tool Approval Options
+
+| Flag | Effect |
+|------|--------|
+| `--allow-tool 'pal'` | Auto-approve all PAL tools |
+| `--allow-tool 'pal(thinkdeep)'` | Auto-approve only thinkdeep |
+| `--deny-tool 'pal(secaudit)'` | Block specific tool |
+| `--allow-all-tools` | Auto-approve everything (YOLO) |
+
+---
+
 ## Configuration Files Reference
 
 ### File Locations Summary
@@ -483,10 +647,11 @@ gemini -m gemini-2.5-pro "Explain async programming"
 | **Claude Desktop** | `claude_desktop_config.json` | `%APPDATA%\Claude\` |
 | **Codex CLI** | `config.toml` | `~/.codex/` |
 | **Gemini CLI** | `settings.json` | `~/.gemini/` |
+| **Copilot CLI** | `mcp-config.json` | `~/.copilot/` |
 
 ### Shared Configuration Elements
 
-All three configs use the **same conda command**:
+All four configs use the **same conda command**:
 
 ```
 Command: C:\Users\Egusto\anaconda3\condabin\conda.bat
@@ -759,22 +924,23 @@ This restored the original logic that checks for venv first before falling back 
 
 ---
 
-## Comparison: Claude Desktop vs Codex CLI vs Gemini CLI
+## Comparison: All Four CLIs
 
-| Feature | Claude Desktop | Codex CLI | Gemini CLI |
-|---------|---------------|-----------|------------|
-| **Interface** | Desktop app (browser-based) | Terminal | Terminal |
-| **Config format** | JSON | TOML | JSON |
-| **Config location** | `%APPDATA%\Claude\` | `~/.codex/` | `~/.gemini/` |
-| **Model switching** | Manual (UI) | Profiles (`-p flag`) | `-m` flag |
-| **Local models** | ❌ No (cloud only) | ✅ Via Ollama | ❌ No (cloud only) |
-| **PAL MCP** | ✅ Via Ollama models | ✅ Via Ollama models | ✅ Via Ollama models |
-| **Multi-model** | No | Via PAL | Via PAL |
-| **Web search** | No | Built-in + PAL | Via PAL |
-| **Best for** | General chat, web UI | Coding, automation, local-first | Gemini features + PAL tools |
-| **API cost** | Claude API required | Free with Ollama | Gemini API required |
+| Feature | Claude Desktop | Codex CLI | Gemini CLI | Copilot CLI |
+|---------|---------------|-----------|------------|-------------|
+| **Interface** | Desktop app | Terminal | Terminal | Terminal |
+| **Config format** | JSON | TOML | JSON | JSON |
+| **Config location** | `%APPDATA%\Claude\` | `~/.codex/` | `~/.gemini/` | `~/.copilot/` |
+| **Model switching** | Manual (UI) | Profiles (`-p`) | `-m` flag | `--model` flag |
+| **Local models** | ❌ Cloud only | ✅ Via Ollama | ❌ Cloud only | ❌ Cloud only |
+| **PAL MCP** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Multi-model** | Via PAL | Via PAL | Via PAL | Via PAL |
+| **Tool approval** | Automatic | Config-based | Config-based | Per-run flags |
+| **Built-in MCP** | None | None | None | GitHub MCP |
+| **Best for** | General chat | Local-first coding | Gemini features | GitHub integration |
+| **API cost** | Claude API | Free (Ollama) | Gemini API | GitHub Copilot sub |
 
-**Key Insight:** All three CLIs can use **local Ollama models via PAL MCP** for multi-model orchestration, even though Claude Desktop and Gemini CLI are cloud-based for their primary models.
+**Key Insight:** All four CLIs can use **local Ollama models via PAL MCP** for multi-model orchestration, even though three of them are cloud-based for their primary models.
 
 ---
 
@@ -794,7 +960,7 @@ model = "NeuralNexusLab/CodeXor:12b"
 
 ### Restricting PAL to Specific Models
 
-Add to all three configs:
+Add to all four configs:
 
 ```
 OLLAMA_ALLOWED_MODELS=qwen2.5-coder:32b-5090,deepseek-r1:32b-5090
@@ -802,7 +968,7 @@ OLLAMA_ALLOWED_MODELS=qwen2.5-coder:32b-5090,deepseek-r1:32b-5090
 
 ### Disabling Unused PAL Tools
 
-Add to all three configs:
+Add to all four configs:
 
 ```
 DISABLED_TOOLS=analyze,refactor,testgen,secaudit,docgen,tracer
@@ -827,7 +993,7 @@ Then set `OPENAI_API_KEY` in PAL env.
 
 ## Summary
 
-You now have **three AI CLIs** configured to use:
+You now have **four AI CLIs** configured to use:
 
 1. ✅ **Shared conda environment** (`pal-mcp`)
 2. ✅ **Single PAL MCP Server instance**
@@ -838,6 +1004,7 @@ You now have **three AI CLIs** configured to use:
 - `%APPDATA%\Claude\claude_desktop_config.json`
 - `~/.codex/config.toml`
 - `~/.gemini/settings.json`
+- `~/.copilot/mcp-config.json`
 
 **All using the same command:**
 ```
@@ -859,8 +1026,10 @@ C:\Users\Egusto\anaconda3\condabin\conda.bat run -n pal-mcp --no-capture-output 
 | `codex-config-conda.toml` | Codex CLI config (conda method) |
 | `codex-config-venv.toml` | Codex CLI config (venv method) |
 | `gemini-settings.json` | Gemini CLI config (conda method) |
+| `copilot-mcp-config-conda.json` | Copilot CLI config (conda method) |
+| `copilot-mcp-config-venv.json` | Copilot CLI config (venv method) |
 | `docs/CLAUDE-CODEX-GEMINI-SETUP.md` | This comprehensive guide |
-| `website/docs/tools/codex-cli.md` | Detailed Codex/Gemini documentation |
+| `website/docs/tools/codex-cli.md` | Detailed Codex/Gemini/Copilot documentation |
 | `docs/PAL-OLLAMA-INTEGRATION.md` | PAL + Ollama integration guide |
 
 ---

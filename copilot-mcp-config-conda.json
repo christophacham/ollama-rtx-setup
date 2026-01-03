@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "pal": {
+      "type": "local",
+      "command": "C:\\Users\\Egusto\\anaconda3\\condabin\\conda.bat",
+      "tools": ["*"],
+      "args": [
+        "run",
+        "-n",
+        "pal-mcp",
+        "--no-capture-output",
+        "python",
+        "C:\\Users\\Egusto\\code\\pal-mcp-server\\server.py"
+      ],
+      "env": {
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "DEFAULT_MODEL": "auto"
+      }
+    }
+  }
+}

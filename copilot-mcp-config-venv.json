@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "pal": {
+      "type": "local",
+      "command": "C:\\Users\\Egusto\\code\\pal-mcp-server\\.pal_venv\\Scripts\\python.exe",
+      "tools": ["*"],
+      "args": [
+        "C:\\Users\\Egusto\\code\\pal-mcp-server\\server.py"
+      ],
+      "env": {
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "DEFAULT_MODEL": "auto"
+      }
+    }
+  }
+}
