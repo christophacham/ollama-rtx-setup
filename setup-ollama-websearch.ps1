@@ -966,7 +966,22 @@ function New-PerplexicaCompose {
     $backendImage = Get-ImageRef -Name "perplexica-backend" -Tag "main"
     $frontendImage = Get-ImageRef -Name "perplexica-frontend" -Tag "main"
 
-    $composeContent = @"
+    # Check if SearXNG is already running (from OpenWebUI setup)
+    $searxngExists = Invoke-Container @("ps", "-a", "--filter", "name=searxng", "--format", "{{.Names}}") 2>&1
+    $includeSearxng = $searxngExists -ne "searxng"
+
+    if (-not $includeSearxng) {
+        Write-Info "SearXNG already exists, reusing existing container"
+        # Make sure it's running
+        $running = Invoke-Container @("ps", "--filter", "name=searxng", "--format", "{{.Names}}") 2>&1
+        if ($running -ne "searxng") {
+            Invoke-Container @("start", "searxng") | Out-Null
+        }
+    }
+
+    # Build compose content based on whether SearXNG needs to be included
+    if ($includeSearxng) {
+        $composeContent = @"
 services:
   searxng:
     image: $searxngImage
@@ -992,7 +1007,6 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      # Note: Perplexica image uses /home/perplexica/ for config
       - ./perplexica/config.toml:/home/perplexica/config.toml
       - ./perplexica/data:/home/perplexica/data
     depends_on:
@@ -1004,7 +1018,6 @@ services:
     networks:
       - perplexica-network
     healthcheck:
-      # Using node TCP check since wget/curl not installed in this image
       test: ["CMD", "node", "-e", "require('net').connect(3001,'localhost',()=>process.exit(0)).on('error',()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
@@ -1026,7 +1039,6 @@ services:
     networks:
       - perplexica-network
     healthcheck:
-      # Using node TCP check since wget/curl not installed in this image
       test: ["CMD", "node", "-e", "require('net').connect(3000,'localhost',()=>process.exit(0)).on('error',()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
@@ -1037,6 +1049,50 @@ networks:
   perplexica-network:
     driver: bridge
 "@
+    } else {
+        # SearXNG already exists - compose without it, use host network for backend
+        $composeContent = @"
+services:
+  perplexica-backend:
+    image: $backendImage
+    container_name: perplexica-backend
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./perplexica/config.toml:/home/perplexica/config.toml
+      - ./perplexica/data:/home/perplexica/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    network_mode: bridge
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(3001,'localhost',()=>process.exit(0)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  perplexica-frontend:
+    image: $frontendImage
+    container_name: perplexica-frontend
+    ports:
+      - "3002:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_WS_URL=ws://localhost:3001
+    depends_on:
+      perplexica-backend:
+        condition: service_healthy
+    restart: unless-stopped
+    network_mode: bridge
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(3000,'localhost',()=>process.exit(0)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+"@
+    }
 
     # Use WriteAllText to avoid BOM
     [System.IO.File]::WriteAllText($composePath, $composeContent)
