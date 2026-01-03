@@ -450,6 +450,18 @@ If you prefer manual configuration, copy `custom_models.json` to PAL:
 Copy-Item custom_models.json "C:\path\to\pal-mcp-server\conf\"
 ```
 
+## CLI Integration: Claude Desktop, Codex & Gemini
+
+All three AI CLIs can use PAL MCP Server with your local Ollama models through a **shared conda environment**:
+
+- **Claude Desktop** - Desktop app with PAL MCP integration
+- **Codex CLI** - OpenAI's terminal AI for coding and automation
+- **Gemini CLI** - Google's terminal AI with PAL orchestration
+
+**📖 [Complete Setup Guide](docs/CLAUDE-CODEX-GEMINI-SETUP.md)** - Comprehensive documentation covering all three CLIs
+
+---
+
 ## Codex CLI Integration
 
 [OpenAI Codex CLI](https://developers.openai.com/codex) is a terminal-based AI assistant that works with PAL MCP for multi-model orchestration of your local Ollama models.
