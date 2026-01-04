@@ -11,6 +11,15 @@ const sidebars = {
         'getting-started/quick-start',
         'getting-started/installation',
         'getting-started/hardware',
+        'getting-started/choose-your-setup',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'AI CLI Integration',
+      collapsed: false,
+      items: [
+        'tools/cli-setup',
       ],
     },
     {

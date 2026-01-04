@@ -1,10 +1,26 @@
-# Codex & Gemini CLI Setup with PAL MCP
+---
+sidebar_label: CLI Setup Guide
+sidebar_position: 1
+title: AI CLI Integration with PAL MCP
+description: Setup guide for Codex CLI, Gemini CLI, Copilot CLI, and Claude Desktop with PAL MCP Server
+---
 
-Complete guide to setting up OpenAI Codex CLI and Google Gemini CLI with PAL MCP Server integration for multi-model orchestration with your local Ollama models.
+# AI CLI Integration with PAL MCP
 
-## Why Codex CLI + PAL?
+Complete guide to setting up **Codex CLI**, **Gemini CLI**, **GitHub Copilot CLI**, and **Claude Desktop** with PAL MCP Server for multi-model orchestration with your local Ollama models.
 
-**Codex CLI** is OpenAI's official command-line interface for Claude (similar to Anthropic's Claude Code). Combined with PAL MCP Server, you get:
+## Supported CLIs
+
+| CLI | Config Location | Format |
+|-----|----------------|--------|
+| **Claude Desktop** | `%APPDATA%\Claude\claude_desktop_config.json` | JSON |
+| **Codex CLI** | `~/.codex/config.toml` | TOML |
+| **Gemini CLI** | `~/.gemini/settings.json` | JSON |
+| **Copilot CLI** | `~/.copilot/mcp-config.json` | JSON |
+
+## Why PAL MCP?
+
+Combined with PAL MCP Server, you get:
 
 - ✅ **Multi-model orchestration** - Route tasks to best model automatically
 - ✅ **Local-first** - All models run on your RTX 5090 via Ollama
@@ -758,10 +774,108 @@ gemini "Use pal to list available models"
 
 ---
 
+## GitHub Copilot CLI Setup
+
+GitHub Copilot CLI (`gh copilot`) can also use PAL MCP Server for multi-model orchestration.
+
+### Installation
+
+```powershell
+# Install GitHub Copilot CLI extension
+gh extension install github/copilot-cli
+
+# Verify installation
+gh copilot --version
+# Output: @github/copilot-cli version 0.0.374
+```
+
+### Configuration
+
+Create `~/.copilot/mcp-config.json`:
+
+**Conda Setup (recommended):**
+```json
+{
+  "mcpServers": {
+    "pal": {
+      "type": "local",
+      "command": "C:\\Users\\YOUR_USERNAME\\anaconda3\\condabin\\conda.bat",
+      "tools": ["*"],
+      "args": [
+        "run",
+        "-n",
+        "pal-mcp",
+        "--no-capture-output",
+        "python",
+        "C:\\Users\\YOUR_USERNAME\\code\\pal-mcp-server\\server.py"
+      ],
+      "env": {
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "DEFAULT_MODEL": "auto"
+      }
+    }
+  }
+}
+```
+
+**Python venv Setup:**
+```json
+{
+  "mcpServers": {
+    "pal": {
+      "type": "local",
+      "command": "C:\\Users\\YOUR_USERNAME\\code\\pal-mcp-server\\.pal_venv\\Scripts\\python.exe",
+      "tools": ["*"],
+      "args": [
+        "C:\\Users\\YOUR_USERNAME\\code\\pal-mcp-server\\server.py"
+      ],
+      "env": {
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "DEFAULT_MODEL": "auto"
+      }
+    }
+  }
+}
+```
+
+:::warning Critical Requirement
+The `"tools": ["*"]` field is **REQUIRED** for Copilot CLI. Without it, you'll get:
+```
+Failed to start MCP Servers
+```
+This is different from Claude Desktop and Gemini which don't require this field.
+:::
+
+### Usage
+
+```powershell
+# Launch Copilot CLI
+gh copilot
+
+# Allow PAL tools
+gh copilot --allow-tool pal:*
+
+# Use PAL for multi-model consensus
+gh copilot "Use pal to get a consensus on the best approach"
+```
+
+### CLI Comparison Matrix
+
+| Feature | Claude Desktop | Codex CLI | Gemini CLI | Copilot CLI |
+|---------|---------------|-----------|------------|-------------|
+| Config format | JSON | TOML | JSON | JSON |
+| Config location | `%APPDATA%\Claude\*` | `~/.codex/*` | `~/.gemini/*` | `~/.copilot/*` |
+| Requires `tools` array | No | No | No | **Yes** |
+| Best for | Chat UI | Local coding | Gemini models | GitHub integration |
+| MCP support | ✅ | ✅ | ✅ | ✅ |
+
+---
+
 ## Related Documentation
 
 - [PAL MCP Server](https://github.com/BeehiveInnovations/pal-mcp-server)
-- [Codex CLI Documentation](https://developers.openai.com/codex)
+- [Codex CLI Documentation](https://openai.github.io/codex-cli/)
 - [Gemini CLI Documentation](https://github.com/google/generative-ai-cli)
+- [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-cli)
 - [Model Selection Guide](../guides/model-selection.md)
-- [PAL + Ollama Integration](../../docs/PAL-OLLAMA-INTEGRATION.md)
+- [Comprehensive CLI Setup Guide (all 4 CLIs)](/docs/CLAUDE-CODEX-GEMINI-SETUP.md)
