@@ -2,204 +2,181 @@
 sidebar_position: 1
 ---
 
-# Model Selection Guide
+# Model Configuration Reference
 
-Choosing the right model for your task. Updated December 2025.
+Complete reference for PAL MCP Server model stack. Updated January 2026.
 
-## Why Model Choice Matters
+## Overview
 
-Different models excel at different tasks. A model optimized for coding may struggle with creative writing. A reasoning-focused model may be overkill for simple chat.
+PAL uses a **minimal, focused model stack** - 4 local Ollama models + 5 OpenRouter cloud models. Each model has a specific purpose with no redundancy.
 
-**Key factors:**
-- **Task type** - Coding, reasoning, chat, creative
-- **Speed requirements** - Interactive vs. batch processing
-- **VRAM budget** - What fits on your GPU
-- **Accuracy needs** - When "good enough" vs. "best possible"
+## Local Models (Ollama)
 
-## RTX 5090 Optimized Stack (32GB VRAM)
+These run on your RTX 5090 (32GB VRAM) via Ollama:
 
-The setup script installs an optimized combination for RTX 5090:
+| Model | Aliases | VRAM | Use Case |
+|-------|---------|------|----------|
+| `qwen2.5-coder:32b` | `coder`, `code`, `qwen` | ~19GB | Best local coding, 92 languages, rivals GPT-4o |
+| `deepseek-r1:32b` | `deepseek`, `r1`, `reasoning`, `think` | ~20GB | Best local reasoning, approaches O3 |
+| `qwen2.5:3b` | `quick`, `fast`, `small`, `3b` | ~2GB | Ultra-fast for simple tasks |
+| `dolphin3:8b` | `dolphin`, `uncensored`, `unfiltered` | ~5GB | Uncensored, no safety filters |
 
-| Model | VRAM | Purpose |
-|-------|------|---------|
-| **qwen2.5:3b** | ~2GB | Fast web search queries |
-| **qwen2.5:14b** | ~8GB | Synthesis & aggregation |
-| **qwen2.5-coder:14b** | ~8GB | Code generation |
+### Usage Examples
 
-**Total: ~18GB** | **Remaining for context: ~14GB**
+```bash
+# Coding tasks
+pal coder "Write a Python async HTTP client"
 
-This leaves headroom for large context windows and concurrent model loading.
+# Deep reasoning
+pal reasoning "Analyze the time complexity of this algorithm"
+
+# Quick simple tasks
+pal quick "What's 2+2?"
+
+# Unrestricted tasks
+pal uncensored "Explain how X works without caveats"
+```
+
+### Installation
 
 ```powershell
-# Install optimized stack
-.\setup-ollama-websearch.ps1 -Setup OpenWebUI
+# Install all 4 core models (default)
+.\setup-ollama.ps1
+
+# Minimal: just coder + reasoning
+.\setup-ollama.ps1 -MinimalModels
+
+# Full: adds qwen3:32b and phi4:14b
+.\setup-ollama.ps1 -AllModels
 ```
 
-## Recommended Models by Task
+## Cloud Models (OpenRouter)
 
-### Coding & Development
+These run via OpenRouter API for tasks requiring web search, massive context, or cloud capabilities:
 
-| Model | Size | Why Choose It |
-|-------|------|---------------|
-| **qwen3:32b** | 32B | Best balance of coding ability and speed |
-| **deepseek-coder-v2:16b** | 16B | Specialized for code, efficient |
-| **codellama:34b** | 34B | Meta's code-focused model |
+| Model | Aliases | Context | Use Case |
+|-------|---------|---------|----------|
+| `x-ai/grok-4.1-fast` | `grok`, `grok4`, `agentic`, `tool-calling` | 2M | Best agentic tool calling |
+| `meta-llama/llama-4-maverick` | `maverick`, `llama4`, `vision`, `multimodal`, `images` | 1M | Image analysis, multimodal |
+| `deepseek/deepseek-v3.2` | `deepseek-v3`, `v3.2`, `deepseek-cloud`, `workhorse` | 164K | Heavy reasoning, bulk work |
+| `perplexity/sonar-reasoning` | `sonar-reasoning`, `web-search`, `research`, `perplexity` | 127K | Web search + DeepSeek R1 reasoning |
+| `perplexity/sonar` | `sonar`, `quick-search`, `sonar-cheap` | 127K | Cheapest web search |
 
-**Why Qwen3?** Alibaba's Qwen3 consistently outperforms similarly-sized models on coding benchmarks. The 32B variant fits comfortably on 24GB+ GPUs with excellent token throughput.
+### Pricing Reference
+
+| Model | Input | Output | Notes |
+|-------|-------|--------|-------|
+| Grok 4.1 Fast | $0.20/M | $0.50/M | Cheapest 2M context |
+| Llama 4 Maverick | $0.15/M | $0.60/M | Cheapest multimodal |
+| DeepSeek V3.2 | ~$0.27/M | ~$1.10/M | GPT-5 class |
+| Sonar Reasoning | $1/M | $5/M | +$5/K requests |
+| Sonar | $1/M | $1/M | +$5/K requests |
+
+### Usage Examples
+
+```bash
+# Web search with reasoning
+pal web-search "Latest Rust async patterns 2026"
+
+# Image analysis
+pal vision "Analyze this architecture diagram" --image diagram.png
+
+# Agentic multi-step tasks
+pal grok "Research and summarize top 5 Go frameworks"
+
+# Heavy cloud reasoning
+pal workhorse "Refactor this 2000-line file"
+
+# Quick cheap web lookup
+pal sonar "What time is it in Tokyo?"
+```
+
+## Complete Alias Reference
+
+### Local (Ollama)
+
+```
+coder, code, qwen       → qwen2.5-coder:32b
+deepseek, r1, reasoning, think → deepseek-r1:32b
+quick, fast, small, 3b  → qwen2.5:3b
+dolphin, uncensored, unfiltered → dolphin3:8b
+```
+
+### Cloud (OpenRouter)
+
+```
+grok, grok4, agentic, tool-calling → x-ai/grok-4.1-fast
+maverick, llama4, vision, multimodal, images → meta-llama/llama-4-maverick
+deepseek-v3, v3.2, deepseek-cloud, workhorse → deepseek/deepseek-v3.2
+sonar-reasoning, web-search, research, perplexity → perplexity/sonar-reasoning
+sonar, quick-search, sonar-cheap → perplexity/sonar
+```
+
+## Routing Logic
+
+PAL automatically routes based on task type:
+
+| Task Type | Model Used |
+|-----------|------------|
+| Coding | `qwen2.5-coder:32b` (local) |
+| Reasoning | `deepseek-r1:32b` (local) |
+| Quick tasks | `qwen2.5:3b` (local) |
+| Web search | `perplexity/sonar-reasoning` (cloud) |
+| Image analysis | `meta-llama/llama-4-maverick` (cloud) |
+| Agentic tools | `x-ai/grok-4.1-fast` (cloud) |
+| Heavy lifting | `deepseek/deepseek-v3.2` (cloud) |
+
+## Configuration Files
+
+### Local Models: `custom_models.json`
+
+```json
+{
+  "models": [
+    {
+      "model_name": "qwen2.5-coder:32b-5090",
+      "aliases": ["qwen-coder", "coder", "code", "qwen"],
+      "intelligence_score": 18
+    }
+  ]
+}
+```
+
+### Cloud Models: `openrouter_models.json`
+
+```json
+{
+  "models": [
+    {
+      "model_name": "perplexity/sonar-reasoning",
+      "aliases": ["sonar-reasoning", "web-search", "research"],
+      "context_window": 127000
+    }
+  ]
+}
+```
+
+## VRAM Management
+
+With RTX 5090 (32GB), you can run:
+
+- **One large model**: qwen2.5-coder:32b (~19GB) + context
+- **Two medium models**: deepseek-r1:32b + qwen2.5:3b
+- **Small + large**: Any 32B model + qwen2.5:3b (runs alongside)
+
+Ollama uses LRU eviction - least recently used models are unloaded when VRAM fills.
 
 ```powershell
-ollama run qwen3:32b "Write a Python function to merge two sorted lists"
+# Configure max concurrent models
+$env:OLLAMA_MAX_LOADED_MODELS = 2
 ```
 
-### Deep Reasoning
+## Optimized Variants
 
-| Model | Size | Why Choose It |
-|-------|------|---------------|
-| **deepseek-r1:32b** | 32B | Chain-of-thought reasoning built-in |
-| **qwen3:32b** | 32B | Strong reasoning with `/think` mode |
-| **llama3.3:70b** | 70B | Largest open model, best raw capability |
-
-**Why DeepSeek-R1?** DeepSeek-R1 was trained specifically for step-by-step reasoning. It "shows its work" naturally, making it excellent for math, logic, and complex analysis.
+After downloading base models, run the optimizer to create RTX 5090 variants:
 
 ```powershell
-ollama run deepseek-r1:32b "Prove that there are infinitely many prime numbers"
+.\optimize-ollama-5090.ps1
 ```
 
-### General Chat & Assistance
-
-| Model | Size | Why Choose It |
-|-------|------|---------------|
-| **llama3.1:8b** | 8B | Fast, capable, runs everywhere |
-| **mistral:7b** | 7B | Excellent quality-to-size ratio |
-| **gemma3:9b** | 9B | Google's efficient assistant model |
-
-**Why Llama 3.1 8B?** Meta's Llama 3.1 8B offers remarkable capability in a small package. It loads in under a second and generates 80+ tokens/sec on modern GPUs.
-
-### Creative Writing
-
-| Model | Size | Why Choose It |
-|-------|------|---------------|
-| **llama3.3:70b** | 70B | Rich vocabulary, nuanced output |
-| **qwen3:32b** | 32B | Excellent creative capabilities |
-| **mistral-nemo:12b** | 12B | Good creativity, smaller footprint |
-
-**Why larger models for creative work?** Creative tasks benefit from the larger "vocabulary" and more nuanced associations in bigger models. The quality difference is noticeable.
-
-### Web Search & Research
-
-| Model | Size | Why Choose It |
-|-------|------|---------------|
-| **qwen2.5:3b** | 3B | Lightning fast queries (~2GB VRAM) |
-| **qwen2.5:14b** | 14B | Synthesize and aggregate results |
-| **qwen3:32b** | 32B | Best at complex multi-source synthesis |
-| **deepseek-r1:32b** | 32B | Deep analysis of sources |
-
-**Why qwen2.5 for web search?** The qwen2.5 family offers excellent speed-to-quality ratio. The 3B model handles simple queries in milliseconds while the 14B provides deeper synthesis without the overhead of larger models.
-
-## Community Models
-
-High-quality community finetunes available via the `-CoderModels` flag.
-
-| Model | Size | Context | Best For |
-|-------|------|---------|----------|
-| **NeuralNexusLab/CodeXor:20b** | ~14GB | 128K | Zero-omission coding (GPT-OSS base) |
-| **NeuralNexusLab/CodeXor:12b** | ~9GB | 128K | **VISION** + coding (Gemma 3 base) |
-| **mikepfunk28/deepseekq3_coder** | ~5GB | 128K | Coding with chain-of-thought |
-| **mikepfunk28/deepseekq3_agent** | ~5GB | 128K | Agent/tool-calling tasks |
-| **second_constantine/deepseek-coder-v2:16b** | ~9GB | 160K | Long-context coding |
-
-### CodeXor - Zero-Omission Coding
-
-[NeuralNexusLab/CodeXor](https://ollama.com/NeuralNexusLab/CodeXor) is engineered with a "zero-omission" philosophy - it won't use lazy placeholders like `// ... implement logic here`.
-
-- **CodeXor:20b** - Based on OpenAI GPT-OSS 20B (Apache 2.0), matches o3-mini on coding benchmarks
-- **CodeXor:12b** - Based on Google Gemma 3, includes **vision capability** for analyzing screenshots and diagrams
-
-**Why community models?** These finetunes often combine strengths from multiple base models. The deepseekq3 series adds Qwen3's thinking capabilities to DeepSeek's coding prowess.
-
-```powershell
-# Install all coding models including community finetunes
-.\setup-ollama.ps1 -CoderModels
-
-# Or pull individually
-ollama pull mikepfunk28/deepseekq3_coder
-```
-
-## Model Comparison Matrix
-
-| Model | Coding | Reasoning | Chat | Creative | Speed |
-|-------|--------|-----------|------|----------|-------|
-| CodeXor:20b | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ |
-| CodeXor:12b | ★★★★☆ | ★★★☆☆ | ★★★☆☆ | ★★☆☆☆ | ★★★★☆ |
-| qwen2.5:3b | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★☆☆☆ | ★★★★★ |
-| qwen2.5:14b | ★★★★☆ | ★★★★☆ | ★★★★☆ | ★★★☆☆ | ★★★★☆ |
-| qwen2.5-coder:14b | ★★★★★ | ★★★☆☆ | ★★★☆☆ | ★★☆☆☆ | ★★★★☆ |
-| qwen3:32b | ★★★★★ | ★★★★☆ | ★★★★☆ | ★★★★☆ | ★★★☆☆ |
-| deepseek-r1:32b | ★★★★☆ | ★★★★★ | ★★★☆☆ | ★★★☆☆ | ★★★☆☆ |
-| llama3.3:70b | ★★★★☆ | ★★★★★ | ★★★★★ | ★★★★★ | ★★☆☆☆ |
-| phi-4:14b | ★★★★☆ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★★☆ |
-| deepseekq3_coder | ★★★★☆ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★★★ |
-
-## Quantization Guide
-
-Models come in different quantization levels. Lower quantization = smaller size but reduced quality.
-
-| Quantization | Quality | Size Reduction | When to Use |
-|--------------|---------|----------------|-------------|
-| Q8_0 | 99% | 50% | When VRAM allows |
-| Q6_K | 97% | 60% | Good balance |
-| Q4_K_M | 95% | 70% | **Default choice** |
-| Q4_0 | 92% | 75% | Tight VRAM |
-| Q2_K | 85% | 85% | Last resort |
-
-```powershell
-# Pull specific quantization
-ollama pull llama3.3:70b-instruct-q4_K_M
-```
-
-## Running Multiple Models
-
-Ollama can keep multiple models loaded if VRAM permits:
-
-```powershell
-# Configure max loaded models
-$env:OLLAMA_MAX_LOADED_MODELS = 3
-
-# Models are loaded on-demand and cached
-ollama run qwen3:32b "Hello"      # Loads qwen3
-ollama run llama3.1:8b "Hello"    # Loads llama, keeps qwen3 if VRAM allows
-```
-
-**LRU eviction:** When VRAM fills, the least-recently-used model is unloaded automatically.
-
-## Model Update Strategy
-
-Models improve over time. Check for updates:
-
-```powershell
-# Update all models
-ollama list | ForEach-Object { ollama pull ($_ -split '\s+')[0] }
-
-# Check specific model
-ollama show qwen3:32b --modelfile
-```
-
-## Custom Model Configuration
-
-Create a Modelfile for custom settings:
-
-```dockerfile
-# Modelfile.coding
-FROM qwen3:32b
-
-PARAMETER temperature 0.2
-PARAMETER top_p 0.9
-PARAMETER num_ctx 8192
-
-SYSTEM "You are a senior software engineer. Write clean, well-documented code."
-```
-
-```powershell
-ollama create coding-assistant -f Modelfile.coding
-ollama run coding-assistant
-```
+This creates `-5090` suffixed models with optimal quantization and context settings.
