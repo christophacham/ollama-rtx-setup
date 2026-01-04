@@ -873,9 +873,9 @@ gh copilot "Use pal to get a consensus on the best approach"
 
 ## Related Documentation
 
+- [Multi-Agent Workflows](../guides/multi-agent-workflows.md) - Run multiple CLIs together (Coder + Observer pattern)
 - [PAL MCP Server](https://github.com/BeehiveInnovations/pal-mcp-server)
 - [Codex CLI Documentation](https://openai.github.io/codex-cli/)
 - [Gemini CLI Documentation](https://github.com/google/generative-ai-cli)
 - [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-cli)
 - [Model Selection Guide](../guides/model-selection.md)
-- [Comprehensive CLI Setup Guide (all 4 CLIs)](/docs/CLAUDE-CODEX-GEMINI-SETUP.md)

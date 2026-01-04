@@ -20,6 +20,7 @@ const sidebars = {
       collapsed: false,
       items: [
         'tools/cli-setup',
+        'guides/multi-agent-workflows',
       ],
     },
     {
