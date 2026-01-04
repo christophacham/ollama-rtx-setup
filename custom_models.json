@@ -1,21 +1,14 @@
 {
   "_README": {
-    "description": "Model metadata for local/self-hosted OpenAI-compatible endpoints (Custom provider).",
-    "updated_by": "Manual sync with ollama ls - RTX 5090 (32GB VRAM)",
-    "field_notes": "Matches providers/shared/model_capabilities.py.",
+    "description": "Model metadata for local Ollama models (RTX 5090 32GB VRAM)",
     "usage": "Each entry will be advertised by the Custom provider. Aliases are case-insensitive.",
-    "last_updated": "January 2026",
-    "documentation": "https://github.com/BeehiveInnovations/pal-mcp-server/blob/main/docs/custom_models.md"
+    "note": "Minimal stack: coder + reasoning + fast + uncensored",
+    "last_updated": "January 2026"
   },
   "models": [
     {
       "model_name": "qwen2.5-coder:32b-5090",
-      "aliases": [
-        "qwen-coder-32b",
-        "qwen-coder",
-        "coder-32b",
-        "qwen25-coder"
-      ],
+      "aliases": ["qwen-coder", "coder", "code", "qwen"],
       "description": "Qwen 2.5 Coder 32B - Best local coding model, 92 languages, rivals GPT-4o",
       "context_window": 131072,
       "max_output_tokens": 32768,
@@ -27,30 +20,8 @@
       "max_image_size_mb": 0.0
     },
     {
-      "model_name": "qwen2.5-coder:14b",
-      "aliases": [
-        "qwen-coder-14b",
-        "coder-14b",
-        "coder"
-      ],
-      "description": "Qwen 2.5 Coder 14B - Fast coding model, good balance of speed and quality",
-      "context_window": 131072,
-      "max_output_tokens": 32768,
-      "intelligence_score": 16,
-      "supports_images": false,
-      "supports_json_mode": true,
-      "supports_function_calling": false,
-      "supports_extended_thinking": false,
-      "max_image_size_mb": 0.0
-    },
-    {
       "model_name": "deepseek-r1:32b-5090",
-      "aliases": [
-        "deepseek-r1",
-        "deepseek",
-        "r1",
-        "reasoning"
-      ],
+      "aliases": ["deepseek", "r1", "reasoning", "think"],
       "description": "DeepSeek-R1 32B - Best local reasoning, approaches O3/Gemini 2.5 Pro",
       "context_window": 128000,
       "max_output_tokens": 32768,
@@ -62,164 +33,25 @@
       "max_image_size_mb": 0.0
     },
     {
-      "model_name": "qwen3:32b-5090",
-      "aliases": [
-        "qwen3",
-        "qwen",
-        "local-qwen"
-      ],
-      "description": "Qwen3 32B - Dual thinking/non-thinking modes, surpasses QwQ",
-      "context_window": 131072,
-      "max_output_tokens": 32768,
-      "intelligence_score": 17,
+      "model_name": "qwen2.5:3b",
+      "aliases": ["quick", "fast", "small", "3b"],
+      "description": "Qwen 2.5 3B - Ultra-fast for simple tasks, runs alongside big models",
+      "context_window": 32768,
+      "max_output_tokens": 8192,
+      "intelligence_score": 8,
       "supports_images": false,
       "supports_json_mode": true,
       "supports_function_calling": false,
-      "supports_extended_thinking": true,
-      "max_image_size_mb": 0.0
-    },
-    {
-      "model_name": "devstral-small-2:latest-5090",
-      "aliases": [
-        "devstral",
-        "devstral-small",
-        "mistral-dev"
-      ],
-      "description": "Devstral Small 2 - Mistral's coding-focused model, good for development tasks",
-      "context_window": 131072,
-      "max_output_tokens": 32768,
-      "intelligence_score": 16,
-      "supports_images": false,
-      "supports_json_mode": true,
-      "supports_function_calling": true,
-      "supports_extended_thinking": false,
-      "max_image_size_mb": 0.0
-    },
-    {
-      "model_name": "phi4:14b",
-      "aliases": [
-        "phi4",
-        "phi",
-        "microsoft"
-      ],
-      "description": "Phi-4 14B - Microsoft's efficient model, rivals 70B on reasoning",
-      "context_window": 32768,
-      "max_output_tokens": 16384,
-      "intelligence_score": 16,
-      "supports_images": false,
-      "supports_json_mode": true,
-      "supports_function_calling": true,
-      "supports_extended_thinking": true,
-      "max_image_size_mb": 0.0
-    },
-    {
-      "model_name": "NeuralNexusLab/CodeXor:20b",
-      "aliases": [
-        "codexor-20b",
-        "codexor",
-        "neuralnexus"
-      ],
-      "description": "CodeXor 20B - NeuralNexusLab coding model, large capacity",
-      "context_window": 32768,
-      "max_output_tokens": 16384,
-      "intelligence_score": 15,
-      "supports_images": false,
-      "supports_json_mode": true,
-      "supports_function_calling": false,
-      "supports_extended_thinking": false,
-      "max_image_size_mb": 0.0
-    },
-    {
-      "model_name": "NeuralNexusLab/CodeXor:12b",
-      "aliases": [
-        "codexor-12b"
-      ],
-      "description": "CodeXor 12B - NeuralNexusLab coding model, fast variant",
-      "context_window": 32768,
-      "max_output_tokens": 16384,
-      "intelligence_score": 14,
-      "supports_images": false,
-      "supports_json_mode": true,
-      "supports_function_calling": false,
-      "supports_extended_thinking": false,
-      "max_image_size_mb": 0.0
-    },
-    {
-      "model_name": "wizard-vicuna-uncensored:13b",
-      "aliases": [
-        "wizard",
-        "vicuna",
-        "uncensored"
-      ],
-      "description": "Wizard Vicuna 13B - Uncensored model for unrestricted tasks",
-      "context_window": 4096,
-      "max_output_tokens": 4096,
-      "intelligence_score": 12,
-      "supports_images": false,
-      "supports_json_mode": false,
-      "supports_function_calling": false,
-      "supports_extended_thinking": false,
-      "max_image_size_mb": 0.0
-    },
-    {
-      "model_name": "mikepfunk28/deepseekq3_coder:latest",
-      "aliases": [
-        "deepseekq3-coder",
-        "dsq3-coder"
-      ],
-      "description": "DeepSeek Q3 Coder - Community fine-tuned coding model",
-      "context_window": 32768,
-      "max_output_tokens": 16384,
-      "intelligence_score": 14,
-      "supports_images": false,
-      "supports_json_mode": true,
-      "supports_function_calling": false,
-      "supports_extended_thinking": false,
-      "max_image_size_mb": 0.0
-    },
-    {
-      "model_name": "mikepfunk28/deepseekq3_agent:latest",
-      "aliases": [
-        "deepseekq3-agent",
-        "dsq3-agent"
-      ],
-      "description": "DeepSeek Q3 Agent - Community fine-tuned agentic model",
-      "context_window": 32768,
-      "max_output_tokens": 16384,
-      "intelligence_score": 14,
-      "supports_images": false,
-      "supports_json_mode": true,
-      "supports_function_calling": true,
       "supports_extended_thinking": false,
       "max_image_size_mb": 0.0
     },
     {
       "model_name": "dolphin3:8b-5090",
-      "aliases": [
-        "dolphin",
-        "dolphin3"
-      ],
-      "description": "Dolphin 3 8B - Uncensored conversational model",
+      "aliases": ["dolphin", "uncensored", "unfiltered"],
+      "description": "Dolphin 3 8B - Uncensored for unrestricted tasks",
       "context_window": 32768,
       "max_output_tokens": 16384,
       "intelligence_score": 12,
-      "supports_images": false,
-      "supports_json_mode": true,
-      "supports_function_calling": false,
-      "supports_extended_thinking": false,
-      "max_image_size_mb": 0.0
-    },
-    {
-      "model_name": "qwen2.5:3b",
-      "aliases": [
-        "qwen-3b",
-        "qwen-small",
-        "quick"
-      ],
-      "description": "Qwen 2.5 3B - Ultra-fast lightweight model for simple tasks",
-      "context_window": 32768,
-      "max_output_tokens": 8192,
-      "intelligence_score": 8,
       "supports_images": false,
       "supports_json_mode": true,
       "supports_function_calling": false,

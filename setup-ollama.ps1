@@ -20,7 +20,6 @@ param(
     [switch]$SkipModels,
     [switch]$MinimalModels,
     [switch]$AllModels,
-    [switch]$CoderModels,
     [switch]$ForceDownload,
     [switch]$Help
 )
@@ -56,38 +55,28 @@ Usage: .\setup-ollama.ps1 [options]
 Options:
     -SkipInstall     Skip Ollama installation check
     -SkipModels      Skip model downloads
-    -MinimalModels   Download only essential models (qwen2.5-coder:32b)
+    -MinimalModels   Download only essential models (coder + reasoning)
     -AllModels       Download all recommended models for 32GB VRAM
-    -CoderModels     Download coding-focused models only (includes community finetunes)
     -ForceDownload   Re-download models even if already installed
     -Help            Show this help message
 
 Examples:
-    .\setup-ollama.ps1                    # Smart setup (skips existing)
-    .\setup-ollama.ps1 -MinimalModels     # Quick setup with one model
-    .\setup-ollama.ps1 -AllModels         # Download all recommended models
-    .\setup-ollama.ps1 -CoderModels       # Download coding/developer models only
+    .\setup-ollama.ps1                    # Smart setup (4 core models)
+    .\setup-ollama.ps1 -MinimalModels     # Quick setup (coder + reasoning only)
+    .\setup-ollama.ps1 -AllModels         # Download all 6 models
     .\setup-ollama.ps1 -ForceDownload     # Re-download all models
     .\setup-ollama.ps1 -SkipModels        # Configure only, no downloads
 
-Models for 32GB VRAM (Updated Dec 2025):
-    Core (default):
+Models for 32GB VRAM (Updated Jan 2026):
+    Core (default - 4 models):
       - qwen2.5-coder:32b  (~19GB) - Best coding model (rivals GPT-4o)
-      - deepseek-r1:32b    (~20GB) - Best reasoning (v0528, approaches O3)
-      - qwen3:32b          (~19GB) - Dual thinking modes
+      - deepseek-r1:32b    (~20GB) - Best reasoning (approaches O3)
+      - qwen2.5:3b         (~2GB)  - Ultra-fast for simple tasks
+      - dolphin3:8b        (~5GB)  - Uncensored, no safety filters
 
-    Coder-Only (-CoderModels):
-      - qwen2.5-coder:32b           (~19GB) - Best local coding model
-      - NeuralNexusLab/CodeXor:20b  (~14GB) - Zero-omission, matches o3-mini
-      - NeuralNexusLab/CodeXor:12b  (~9GB)  - Gemma 3 + VISION
-      - devstral-small-2            (~15GB) - 384K context, 65.8% SWE-Bench
-      - mikepfunk28/deepseekq3_coder (~5GB) - DeepSeek Q3 + Qwen3 thinking
-      - mikepfunk28/deepseekq3_agent (~5GB) - Agent-focused variant
-
-    Additional (-AllModels):
-      - phi4:14b                    (~9GB)  - Microsoft's efficient reasoning
-      - dolphin3:8b                 (~5GB)  - Uncensored, no safety filters
-      - wizard-vicuna-uncensored:13b (~8GB) - Uncensored instruction following
+    Additional (-AllModels adds 2 more):
+      - qwen3:32b          (~19GB) - General purpose, dual thinking
+      - phi4:14b           (~9GB)  - Microsoft's efficient reasoning
 
 Smart Features:
     - Only installs Ollama if not already present
@@ -299,51 +288,34 @@ function Start-OllamaService {
 
 # Download models (smart - only missing ones)
 function Install-Models {
-    param([bool]$Minimal, [bool]$All, [bool]$Coder, [bool]$Force)
+    param([bool]$Minimal, [bool]$All, [bool]$Force)
 
     Write-Step "3" "Checking Models"
 
-    # Define models (Updated Dec 2025)
+    # Define models (Updated Jan 2026 - Minimal stack)
     $coreModels = @(
         @{ Name = "qwen2.5-coder:32b"; Desc = "Best coding model (rivals GPT-4o)"; Size = "~19GB" },
-        @{ Name = "deepseek-r1:32b"; Desc = "Best reasoning (v0528, approaches O3)"; Size = "~20GB" },
-        @{ Name = "qwen3:32b"; Desc = "Dual thinking modes, surpasses QwQ"; Size = "~19GB" }
+        @{ Name = "deepseek-r1:32b"; Desc = "Best reasoning (approaches O3)"; Size = "~20GB" },
+        @{ Name = "qwen2.5:3b"; Desc = "Ultra-fast for simple tasks"; Size = "~2GB" },
+        @{ Name = "dolphin3:8b"; Desc = "Uncensored, no safety filters"; Size = "~5GB" }
     )
 
-    # Coder-focused models (for -CoderModels flag)
-    $coderModels = @(
-        @{ Name = "qwen2.5-coder:32b"; Desc = "Best local coding model (rivals GPT-4o)"; Size = "~19GB" },
-        @{ Name = "NeuralNexusLab/CodeXor:20b"; Desc = "GPT-OSS base, zero-omission (no placeholders), matches o3-mini"; Size = "~14GB" },
-        @{ Name = "NeuralNexusLab/CodeXor:12b"; Desc = "Gemma 3 + VISION, analyzes screenshots/diagrams"; Size = "~9GB" },
-        @{ Name = "devstral-small-2"; Desc = "384K context, vision, 65.8% SWE-Bench"; Size = "~15GB" },
-        @{ Name = "mikepfunk28/deepseekq3_coder"; Desc = "DeepSeek Q3 + Qwen3 thinking"; Size = "~5GB" },
-        @{ Name = "mikepfunk28/deepseekq3_agent"; Desc = "Agent-focused variant with tools"; Size = "~5GB" }
-    )
-
+    # Extra models (for -All flag only)
     $extraModels = @(
-        @{ Name = "devstral-small-2"; Desc = "384K context, vision, 65.8% SWE-Bench"; Size = "~15GB" },
-        @{ Name = "phi4:14b"; Desc = "Microsoft's efficient reasoning (rivals 70B)"; Size = "~9GB" },
-        @{ Name = "NeuralNexusLab/CodeXor:20b"; Desc = "GPT-OSS base, zero-omission, matches o3-mini"; Size = "~14GB" },
-        @{ Name = "NeuralNexusLab/CodeXor:12b"; Desc = "Gemma 3 + VISION, analyzes screenshots/diagrams"; Size = "~9GB" },
-        @{ Name = "mikepfunk28/deepseekq3_coder"; Desc = "Community: DeepSeek Q3 + Qwen3 thinking"; Size = "~5GB" },
-        @{ Name = "mikepfunk28/deepseekq3_agent"; Desc = "Community: Agent-focused variant"; Size = "~5GB" },
-        @{ Name = "dolphin3:8b"; Desc = "Uncensored helpful assistant, no safety filters"; Size = "~5GB" },
-        @{ Name = "wizard-vicuna-uncensored:13b"; Desc = "Uncensored, strong instruction following"; Size = "~8GB" }
+        @{ Name = "qwen3:32b"; Desc = "General purpose, dual thinking modes"; Size = "~19GB" },
+        @{ Name = "phi4:14b"; Desc = "Microsoft's efficient reasoning"; Size = "~9GB" }
     )
 
     # Select models based on flags
     if ($Minimal) {
-        $targetModels = @($coreModels[0])
-        Write-Info "Minimal mode: Targeting qwen2.5-coder:32b only"
-    } elseif ($Coder) {
-        $targetModels = $coderModels
-        Write-Info "Coder mode: Targeting 6 coding-focused models"
+        $targetModels = @($coreModels[0], $coreModels[1])
+        Write-Info "Minimal mode: Targeting qwen2.5-coder:32b + deepseek-r1:32b"
     } elseif ($All) {
-        $targetModels = $coreModels + $extraModels + $coderModels
-        Write-Info "Full mode: Targeting all recommended models (including coder models)"
+        $targetModels = $coreModels + $extraModels
+        Write-Info "Full mode: Targeting all 6 models"
     } else {
         $targetModels = $coreModels
-        Write-Info "Standard mode: Targeting 3 core models"
+        Write-Info "Standard mode: Targeting 4 core models"
     }
 
     # Get currently installed models
@@ -779,7 +751,7 @@ function Main {
 
     # Download models (only missing ones)
     if ($success -and -not $SkipModels) {
-        if (-not (Install-Models -Minimal:$MinimalModels -All:$AllModels -Coder:$CoderModels -Force:$ForceDownload)) {
+        if (-not (Install-Models -Minimal:$MinimalModels -All:$AllModels -Force:$ForceDownload)) {
             Write-Warn "Some models failed to download, but continuing..."
         }
     } else {
