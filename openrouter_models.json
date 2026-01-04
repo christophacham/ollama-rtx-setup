@@ -16,7 +16,7 @@
     {
       "model_name": "x-ai/grok-4.1-fast",
       "aliases": ["grok", "grok4", "grok-fast", "agentic", "tool-calling"],
-      "description": "Grok 4.1 Fast - Best agentic tool calling, 2M context, reasoning toggleable",
+      "description": "Grok 4.1 Fast - Best agentic tool calling, 2M context, reasoning toggleable ($0.20/M in, $0.50/M out)",
       "context_window": 2097152,
       "max_output_tokens": 131072,
       "supports_extended_thinking": true,
@@ -24,13 +24,12 @@
       "supports_function_calling": true,
       "supports_images": false,
       "max_image_size_mb": 0.0,
-      "intelligence_score": 16,
-      "note": "Pricing: $0.20/M input, $0.50/M output - extremely cheap for 2M context"
+      "intelligence_score": 16
     },
     {
       "model_name": "meta-llama/llama-4-maverick",
       "aliases": ["maverick", "llama4", "vision", "multimodal", "images"],
-      "description": "Llama 4 Maverick - 400B MoE, 1M context, multimodal vision, 12 languages",
+      "description": "Llama 4 Maverick - 400B MoE, 1M context, multimodal vision, 12 languages ($0.15/M in, $0.60/M out)",
       "context_window": 1048576,
       "max_output_tokens": 65536,
       "supports_extended_thinking": false,
@@ -38,8 +37,7 @@
       "supports_function_calling": true,
       "supports_images": true,
       "max_image_size_mb": 20.0,
-      "intelligence_score": 15,
-      "note": "Pricing: $0.15/M input, $0.60/M output - cheapest multimodal with 1M context"
+      "intelligence_score": 15
     },
     {
       "model_name": "deepseek/deepseek-v3.2",
@@ -57,7 +55,7 @@
     {
       "model_name": "perplexity/sonar-reasoning",
       "aliases": ["sonar-reasoning", "web-search", "research", "perplexity"],
-      "description": "Sonar Reasoning - DeepSeek R1 + web search, uncensored, US hosted, citations included",
+      "description": "Sonar Reasoning - DeepSeek R1 + web search, uncensored, US hosted, citations ($1/M in, $5/M out)",
       "context_window": 127000,
       "max_output_tokens": 8000,
       "supports_extended_thinking": true,
@@ -65,13 +63,12 @@
       "supports_function_calling": false,
       "supports_images": false,
       "max_image_size_mb": 0.0,
-      "intelligence_score": 15,
-      "note": "Pricing: $1/M input, $5/M output, $5/K requests"
+      "intelligence_score": 15
     },
     {
       "model_name": "perplexity/sonar",
       "aliases": ["sonar", "quick-search", "sonar-cheap"],
-      "description": "Sonar - Lightweight web search, fastest and cheapest option with citations",
+      "description": "Sonar - Lightweight web search, fastest and cheapest with citations ($1/M in, $1/M out)",
       "context_window": 127000,
       "max_output_tokens": 8000,
       "supports_extended_thinking": false,
@@ -79,8 +76,7 @@
       "supports_function_calling": false,
       "supports_images": false,
       "max_image_size_mb": 0.0,
-      "intelligence_score": 12,
-      "note": "Pricing: $1/M input, $1/M output, $5/K requests"
+      "intelligence_score": 12
     }
   ]
 }
