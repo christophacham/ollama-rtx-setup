@@ -1,0 +1,48 @@
+{
+  "mcpServers": {
+    "qwen": {
+      "command": "C:\\Users\\Egusto\\anaconda3\\condabin\\conda.bat",
+      "args": [
+        "run",
+        "-n",
+        "vllm",
+        "--no-capture-output",
+        "python",
+        "-c",
+        "from vllm import LLM; llm = LLM('Qwen/Qwen3-4B'); print('Qwen server ready')"
+      ],
+      "env": {
+        "VLLM_BASE_URL": "http://localhost:8000",
+        "DEFAULT_MODEL": "Qwen/Qwen3-4B"
+      }
+    },
+    "pal": {
+      "command": "C:\\Users\\Egusto\\anaconda3\\condabin\\conda.bat",
+      "args": [
+        "run",
+        "-n",
+        "pal-mcp",
+        "--no-capture-output",
+        "python",
+        "C:\\Users\\Egusto\\code\\pal-mcp-server\\server.py"
+      ],
+      "env": {
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "DEFAULT_MODEL": "auto"
+      }
+    }
+  },
+  "security": {
+    "auth": {
+      "selectedType": "qwen-oauth"
+    }
+  },
+  "general": {
+    "disableAutoUpdate": false,
+    "previewFeatures": true
+  },
+  "ui": {
+    "showMemoryUsage": true
+  },
+  "$version": 2
+}
