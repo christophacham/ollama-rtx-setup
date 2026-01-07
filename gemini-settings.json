@@ -20,5 +20,12 @@
     "auth": {
       "selectedType": "oauth-personal"
     }
+  },
+  "general": {
+    "disableAutoUpdate": false,
+    "previewFeatures": true
+  },
+  "ui": {
+    "showMemoryUsage": true
   }
 }

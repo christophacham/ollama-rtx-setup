@@ -1,0 +1,104 @@
+{
+  "optimized": [
+    {
+      "num_ctx": 65536,
+      "cpu_before": 58,
+      "cpu_after": 0,
+      "date": "2025-12-29",
+      "original_size_gb": 8.6,
+      "num_gpu": 99,
+      "original": "second_constantine/deepseek-coder-v2:16b",
+      "optimized": "second_constantine/deepseek-coder-v2:16b-5090"
+    },
+    {
+      "num_ctx": 32768,
+      "cpu_before": 34,
+      "cpu_after": 0,
+      "date": "2025-12-29",
+      "original_size_gb": 14.0,
+      "num_gpu": 99,
+      "original": "devstral:latest",
+      "optimized": "devstral:latest-5090"
+    },
+    {
+      "num_ctx": 65536,
+      "cpu_before": 6,
+      "cpu_after": 0,
+      "date": "2025-12-29",
+      "original_size_gb": 4.9,
+      "num_gpu": 99,
+      "original": "llama3.1:8b",
+      "optimized": "llama3.1:8b-5090"
+    },
+    {
+      "num_ctx": 8192,
+      "cpu_before": 15,
+      "cpu_after": 0,
+      "date": "2025-12-29",
+      "original_size_gb": 24.0,
+      "num_gpu": 99,
+      "original": "nemotron-3-nano:30b",
+      "optimized": "nemotron-3-nano:30b-5090"
+    },
+    {
+      "num_ctx": 16384,
+      "cpu_before": 35,
+      "cpu_after": 0,
+      "date": "2025-12-29",
+      "original_size_gb": 18.0,
+      "num_gpu": 99,
+      "original": "qwen3-coder:30b",
+      "optimized": "qwen3-coder:30b-5090"
+    },
+    {
+      "num_ctx": 32768,
+      "cpu_after": 0,
+      "cpu_before": 50,
+      "original_size_gb": 15.0,
+      "num_gpu": 99,
+      "original": "devstral-small-2:latest",
+      "optimized": "devstral-small-2:latest-5090",
+      "date": "2026-01-03"
+    },
+    {
+      "num_ctx": 16384,
+      "cpu_after": 0,
+      "cpu_before": 3,
+      "original_size_gb": 20.0,
+      "num_gpu": 99,
+      "original": "qwen3:32b",
+      "optimized": "qwen3:32b-5090",
+      "date": "2026-01-03"
+    },
+    {
+      "num_ctx": 16384,
+      "cpu_after": 0,
+      "cpu_before": 56,
+      "original_size_gb": 19.0,
+      "num_gpu": 99,
+      "original": "deepseek-r1:32b",
+      "optimized": "deepseek-r1:32b-5090",
+      "date": "2026-01-03"
+    },
+    {
+      "num_ctx": 16384,
+      "cpu_after": 0,
+      "cpu_before": 3,
+      "original_size_gb": 19.0,
+      "num_gpu": 99,
+      "original": "qwen2.5-coder:32b",
+      "optimized": "qwen2.5-coder:32b-5090",
+      "date": "2026-01-03"
+    },
+    {
+      "optimized": "dolphin3:8b-5090",
+      "num_gpu": 99,
+      "cpu_after": 0,
+      "date": "2026-01-03",
+      "original": "dolphin3:8b",
+      "num_ctx": 65536,
+      "original_size_gb": 4.9,
+      "cpu_before": 8
+    }
+  ]
+}

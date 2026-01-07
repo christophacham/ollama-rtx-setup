@@ -1,0 +1,94 @@
+# Codex CLI Configuration for Windows + Conda
+# Location: C:\Users\Egusto\.codex\config.toml
+
+# ============================================
+# Model Providers Configuration
+# ============================================
+
+# Ollama Provider (Local Models)
+[model_providers.ollama]
+name = "Ollama"
+base_url = "http://localhost:11434/v1"
+wire_api = "responses"  # Fixed: This removes the deprecation warning!
+
+# ============================================
+# Model Profiles
+# ============================================
+
+# Primary coding model - Qwen2.5 Coder 32B
+[profiles.qwen-code]
+model_provider = "ollama"
+model = "qwen2.5-coder:32b-5090"
+
+# Deep thinking model - DeepSeek R1 32B
+[profiles.deepseek]
+model_provider = "ollama"
+model = "deepseek-r1:32b-5090"
+
+# General purpose - Qwen3 32B
+[profiles.qwen3]
+model_provider = "ollama"
+model = "qwen3:32b-5090"
+
+# Devstral - Mistral developer model
+[profiles.devstral]
+model_provider = "ollama"
+model = "devstral-small-2:latest-5090"
+
+# Default GPT-OSS model
+[profiles.gpt-oss]
+model_provider = "ollama"
+model = "gpt-oss:20b"
+
+# ============================================
+# MCP Servers Configuration - Using Conda
+# ============================================
+
+# PAL MCP Server - Multi-model orchestration via Conda
+[mcp_servers.pal]
+command = "C:\\Users\\Egusto\\anaconda3\\condabin\\conda.bat"
+args = [
+    "run",
+    "-n",
+    "pal-mcp",
+    "--no-capture-output",
+    "python",
+    "C:\\Users\\Egusto\\code\\pal-mcp-server\\server.py"
+]
+
+# Timeouts - from official PAL guide
+startup_timeout_sec = 300   # 5 minutes for initial connection
+tool_timeout_sec = 1200      # 20 minutes for tool execution
+
+[mcp_servers.pal.env]
+# Ollama configuration (100% local - no API keys needed!)
+OLLAMA_BASE_URL = "http://localhost:11434"
+DEFAULT_MODEL = "auto"  # Let PAL auto-select best model for each task
+
+# Optional: Add cloud API keys if you want to mix local + cloud models
+# GEMINI_API_KEY = "your-gemini-key-here"
+# OPENAI_API_KEY = "your-openai-key-here"
+# OPENROUTER_API_KEY = "your-openrouter-key-here"
+
+# Optional: Disable specific tools you don't need
+# DISABLED_TOOLS = "analyze,refactor,testgen,secaudit,docgen,tracer"
+
+# Optional: Restrict PAL to specific Ollama models only
+# OLLAMA_ALLOWED_MODELS = "qwen2.5-coder:32b-5090,deepseek-r1:32b-5090,qwen3:32b-5090"
+
+# ============================================
+# Tools Configuration
+# ============================================
+
+# Enable web search - required for PAL's apilookup instructions to work
+[tools]
+web_search = true
+
+# ============================================
+# Default Settings (Optional)
+# ============================================
+
+# Uncomment to set default provider and model
+# [defaults]
+# provider = "ollama"
+# model = "qwen2.5-coder:32b-5090"

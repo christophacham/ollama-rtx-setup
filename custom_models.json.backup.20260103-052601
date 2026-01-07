@@ -1,0 +1,161 @@
+{
+  "models": [
+    {
+      "model_name": "qwen2.5-coder:32b-5090",
+      "aliases": ["qwen-coder", "qwen-code", "coder", "qwen25-coder"],
+      "description": "Qwen 2.5 Coder 32B - Best local coding model, 92 languages, rivals GPT-4o",
+      "context_window": 131072,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_function_calling": false,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "intelligence_score": 18
+    },
+    {
+      "model_name": "deepseek-r1:32b-5090",
+      "aliases": ["deepseek-r1", "deepseek", "r1", "reasoning"],
+      "description": "DeepSeek-R1 32B - Best local reasoning, approaches O3/Gemini 2.5 Pro",
+      "context_window": 128000,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": true,
+      "supports_function_calling": false,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "intelligence_score": 18
+    },
+    {
+      "model_name": "qwen3:32b-5090",
+      "aliases": ["qwen3", "qwen", "local-qwen"],
+      "description": "Qwen3 32B - Dual thinking/non-thinking modes, surpasses QwQ",
+      "context_window": 131072,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": true,
+      "supports_function_calling": false,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "intelligence_score": 17
+    },
+    {
+      "model_name": "devstral-small-2:latest-5090",
+      "aliases": ["devstral", "devstral-small", "mistral-dev", "dev"],
+      "description": "Devstral Small 2 - 384K context, vision, 65.8% SWE-Bench, agentic coding",
+      "context_window": 393216,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "phi4:14b",
+      "aliases": ["phi4", "phi", "microsoft"],
+      "description": "Phi-4 14B - Microsoft's efficient model, rivals 70B on reasoning",
+      "context_window": 32768,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "NeuralNexusLab/CodeXor:20b",
+      "aliases": ["codexor-20b", "codexor-large", "xor-20b", "codexor"],
+      "description": "CodeXor 20B - GPT-OSS base, zero-omission (no placeholders), matches o3-mini",
+      "context_window": 32768,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": false,
+      "supports_function_calling": false,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "NeuralNexusLab/CodeXor:12b",
+      "aliases": ["codexor-12b", "xor-12b", "xor-vision"],
+      "description": "CodeXor 12B - Gemma 3 + VISION, analyzes screenshots/diagrams/UI",
+      "context_window": 32768,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": false,
+      "supports_function_calling": false,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "max_image_size_mb": 20.0,
+      "intelligence_score": 14
+    },
+    {
+      "model_name": "mikepfunk28/deepseekq3_coder",
+      "aliases": ["dsq3-coder", "deepseek-q3-coder", "q3-coder"],
+      "description": "DeepSeek Q3 Coder - Community finetune with Qwen3 thinking",
+      "context_window": 32768,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": true,
+      "supports_function_calling": false,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "intelligence_score": 14
+    },
+    {
+      "model_name": "mikepfunk28/deepseekq3_agent",
+      "aliases": ["dsq3-agent", "deepseek-agent", "agent", "q3-agent"],
+      "description": "DeepSeek Q3 Agent - Agent-focused variant with tool use",
+      "context_window": 32768,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "intelligence_score": 14
+    },
+    {
+      "model_name": "dolphin3:8b",
+      "aliases": ["dolphin3", "dolphin", "uncensored"],
+      "description": "Dolphin 3 8B - Uncensored helpful assistant, no safety filters",
+      "context_window": 16384,
+      "max_output_tokens": 8192,
+      "supports_extended_thinking": false,
+      "supports_function_calling": false,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "intelligence_score": 12
+    },
+    {
+      "model_name": "wizard-vicuna-uncensored:13b",
+      "aliases": ["wizard-vicuna", "vicuna-uncensored", "wizard", "uncensored-13b"],
+      "description": "Wizard Vicuna 13B - Uncensored, strong instruction following",
+      "context_window": 4096,
+      "max_output_tokens": 4096,
+      "supports_extended_thinking": false,
+      "supports_function_calling": false,
+      "supports_json_mode": false,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "intelligence_score": 12
+    }
+  ],
+  "_README": {
+    "description": "Model metadata for PAL MCP Server with local Ollama models",
+    "documentation": "https://github.com/BeehiveInnovations/pal-mcp-server/blob/main/docs/custom_models.md",
+    "usage": "Copy to ~/.pal/custom_models.json for PAL MCP Server to use these models",
+    "model_stack": {
+      "core": ["qwen2.5-coder:32b", "deepseek-r1:32b", "qwen3:32b"],
+      "agentic": ["devstral-small-2"],
+      "efficient": ["phi4:14b", "CodeXor:20b", "CodeXor:12b"],
+      "community": ["deepseekq3_coder", "deepseekq3_agent"],
+      "uncensored": ["dolphin3:8b", "wizard-vicuna-uncensored:13b"]
+    },
+    "total_models": 11,
+    "last_updated": "January 2026"
+  }
+}
