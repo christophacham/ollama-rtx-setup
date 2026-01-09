@@ -1,6 +1,6 @@
 {
   "registry": "ghcr.io/christophacham/ollama-rtx-setup",
-  "last_check": "2026-01-08T06:14:41.9263304+00:00",
+  "last_check": "2026-01-09T06:15:24.3231469+00:00",
   "images": {
     "open-webui:cuda": {
       "upstream": "ghcr.io/open-webui/open-webui:cuda",
