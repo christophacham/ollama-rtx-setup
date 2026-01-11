@@ -1,26 +1,26 @@
 {
   "registry": "ghcr.io/christophacham/ollama-rtx-setup",
-  "last_check": "2026-01-10T06:14:40.9681329+00:00",
+  "last_check": "2026-01-11T06:13:43.9216527+00:00",
   "images": {
     "open-webui:cuda": {
       "upstream": "ghcr.io/open-webui/open-webui:cuda",
-      "upstream_digest": "sha256:fbcc95aa89c372c0ba536aa3298a037b95f7b2e1cb5549849667817f8661fa1c",
-      "local_digest": "sha256:fbcc95aa89c372c0ba536aa3298a037b95f7b2e1cb5549849667817f8661fa1c",
-      "synced_at": "2026-01-10T06:14:45.6941139+00:00",
+      "upstream_digest": "sha256:268d2b1b1f66f2d3f9a4ac3e0f06e0f545e9d6aaf71027115861874120e7edde",
+      "local_digest": "sha256:268d2b1b1f66f2d3f9a4ac3e0f06e0f545e9d6aaf71027115861874120e7edde",
+      "synced_at": "2026-01-11T06:13:46.7484232+00:00",
       "status": "synced"
     },
     "open-webui:main": {
       "upstream": "ghcr.io/open-webui/open-webui:main",
-      "upstream_digest": "sha256:88f5a07f802bc4bc8e68252d82d6559e052762d5f12061c3d42f8892a995569e",
-      "local_digest": "sha256:88f5a07f802bc4bc8e68252d82d6559e052762d5f12061c3d42f8892a995569e",
-      "synced_at": "2026-01-10T06:14:49.6329539+00:00",
+      "upstream_digest": "sha256:000b87a6ae726aa7f6611a0064ba528ba1a6aff6ead5fb3b6c89fd4a5717eb8a",
+      "local_digest": "sha256:000b87a6ae726aa7f6611a0064ba528ba1a6aff6ead5fb3b6c89fd4a5717eb8a",
+      "synced_at": "2026-01-11T06:13:49.4258986+00:00",
       "status": "synced"
     },
     "searxng:latest": {
       "upstream": "docker.io/searxng/searxng:latest",
-      "upstream_digest": "sha256:256b113a44b26a293a24d864707753344ebe75687445a97ed0e8d701dec7af45",
-      "local_digest": "sha256:256b113a44b26a293a24d864707753344ebe75687445a97ed0e8d701dec7af45",
-      "synced_at": "2026-01-10T06:14:58.2770512+00:00",
+      "upstream_digest": "sha256:483cdca227d9e1d9108e9ca86af710de3bca5ebbee6d7305f904a42b3cef379a",
+      "local_digest": "sha256:483cdca227d9e1d9108e9ca86af710de3bca5ebbee6d7305f904a42b3cef379a",
+      "synced_at": "2026-01-11T06:13:57.4095829+00:00",
       "status": "synced"
     },
     "perplexica-backend:main": {
