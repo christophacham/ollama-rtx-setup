@@ -52,43 +52,45 @@ pal uncensored "Explain how X works without caveats"
 
 ## Cloud Models (OpenRouter)
 
-These run via OpenRouter API for tasks requiring web search, massive context, or cloud capabilities:
+These run via OpenRouter API for tasks requiring massive context, multimodal, or cloud capabilities:
 
 | Model | Aliases | Context | Use Case |
 |-------|---------|---------|----------|
-| `x-ai/grok-4.1-fast` | `grok`, `grok4`, `agentic`, `tool-calling` | 2M | Best agentic tool calling |
-| `meta-llama/llama-4-maverick` | `maverick`, `llama4`, `vision`, `multimodal`, `images` | 1M | Image analysis, multimodal |
-| `deepseek/deepseek-v3.2` | `deepseek-v3`, `v3.2`, `deepseek-cloud`, `workhorse` | 164K | Heavy reasoning, bulk work |
-| `perplexity/sonar-reasoning` | `sonar-reasoning`, `web-search`, `research`, `perplexity` | 127K | Web search + DeepSeek R1 reasoning |
-| `perplexity/sonar` | `sonar`, `quick-search`, `sonar-cheap` | 127K | Cheapest web search |
+| `meta-llama/llama-4-maverick` | `maverick`, `llama4`, `vision`, `multimodal`, `images` | 1M | Image analysis, multimodal, 12 languages |
+| `deepseek/deepseek-v3.2` | `deepseek-v3`, `v3.2`, `deepseek-cloud`, `workhorse` | 164K | GPT-5 class reasoning, bulk work |
+| `minimax/minimax-m2.1` | `minimax`, `m2.1`, `m2` | 196K | Coding/agentic workflows, 49.4% Multi-SWE-Bench |
+| `z-ai/glm-4.7` | `glm`, `glm4`, `glm-4.7` | 203K | Multi-step reasoning/execution |
+| `mistralai/devstral-2512:free` | `devstral`, `devstral2`, `mistral-code`, `mistral-free` | 262K | Agentic coding specialist, **FREE** |
+| `xiaomi/mimo-v2-flash:free` | `mimo`, `mimo-flash`, `xiaomi` | 262K | Multimodal vision, **FREE** |
 
 ### Pricing Reference
 
 | Model | Input | Output | Notes |
 |-------|-------|--------|-------|
-| Grok 4.1 Fast | $0.20/M | $0.50/M | Cheapest 2M context |
-| Llama 4 Maverick | $0.15/M | $0.60/M | Cheapest multimodal |
-| DeepSeek V3.2 | ~$0.27/M | ~$1.10/M | GPT-5 class |
-| Sonar Reasoning | $1/M | $5/M | +$5/K requests |
-| Sonar | $1/M | $1/M | +$5/K requests |
+| Llama 4 Maverick | $0.15/M | $0.60/M | Cheapest multimodal, 1M context |
+| DeepSeek V3.2 | ~$0.27/M | ~$1.10/M | GPT-5 class workhorse |
+| MiniMax M2.1 | $0.28/M | $1.20/M | Best for agentic coding |
+| GLM 4.7 | $0.40/M | $1.50/M | Z.AI flagship reasoning |
+| Devstral 2 | **FREE** | **FREE** | 123B dense, MIT license |
+| MiMo V2 Flash | **FREE** | **FREE** | Xiaomi multimodal |
 
 ### Usage Examples
 
 ```bash
-# Web search with reasoning
-pal web-search "Latest Rust async patterns 2026"
-
 # Image analysis
 pal vision "Analyze this architecture diagram" --image diagram.png
-
-# Agentic multi-step tasks
-pal grok "Research and summarize top 5 Go frameworks"
 
 # Heavy cloud reasoning
 pal workhorse "Refactor this 2000-line file"
 
-# Quick cheap web lookup
-pal sonar "What time is it in Tokyo?"
+# Free agentic coding
+pal devstral "Build a REST API with error handling"
+
+# Free multimodal
+pal mimo "Describe what's in this screenshot" --image screen.png
+
+# Multi-step reasoning
+pal glm "Debug this complex async issue step by step"
 ```
 
 ## Complete Alias Reference
@@ -105,11 +107,12 @@ dolphin, uncensored, unfiltered → dolphin3:8b
 ### Cloud (OpenRouter)
 
 ```
-grok, grok4, agentic, tool-calling → x-ai/grok-4.1-fast
 maverick, llama4, vision, multimodal, images → meta-llama/llama-4-maverick
 deepseek-v3, v3.2, deepseek-cloud, workhorse → deepseek/deepseek-v3.2
-sonar-reasoning, web-search, research, perplexity → perplexity/sonar-reasoning
-sonar, quick-search, sonar-cheap → perplexity/sonar
+minimax, m2.1, m2 → minimax/minimax-m2.1
+glm, glm4, glm-4.7 → z-ai/glm-4.7
+devstral, devstral2, mistral-code, mistral-free → mistralai/devstral-2512:free
+mimo, mimo-flash, xiaomi → xiaomi/mimo-v2-flash:free
 ```
 
 ## Routing Logic
@@ -118,12 +121,11 @@ PAL automatically routes based on task type:
 
 | Task Type | Model Used |
 |-----------|------------|
-| Coding | `qwen2.5-coder:32b` (local) |
-| Reasoning | `deepseek-r1:32b` (local) |
+| Coding | `qwen2.5-coder:32b` (local) or `mistralai/devstral-2512:free` (cloud, FREE) |
+| Reasoning | `deepseek-r1:32b` (local) or `z-ai/glm-4.7` (cloud) |
 | Quick tasks | `qwen2.5:3b` (local) |
-| Web search | `perplexity/sonar-reasoning` (cloud) |
-| Image analysis | `meta-llama/llama-4-maverick` (cloud) |
-| Agentic tools | `x-ai/grok-4.1-fast` (cloud) |
+| Image analysis | `meta-llama/llama-4-maverick` (cloud) or `xiaomi/mimo-v2-flash:free` (FREE) |
+| Agentic tools | `minimax/minimax-m2.1` (cloud) |
 | Heavy lifting | `deepseek/deepseek-v3.2` (cloud) |
 
 ## Configuration Files
@@ -148,9 +150,9 @@ PAL automatically routes based on task type:
 {
   "models": [
     {
-      "model_name": "perplexity/sonar-reasoning",
-      "aliases": ["sonar-reasoning", "web-search", "research"],
-      "context_window": 127000
+      "model_name": "mistralai/devstral-2512:free",
+      "aliases": ["devstral", "devstral2", "mistral-code", "mistral-free"],
+      "context_window": 262144
     }
   ]
 }

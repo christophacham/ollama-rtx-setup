@@ -1,31 +1,16 @@
 {
   "_README": {
-    "description": "Minimal OpenRouter stack - DeepSeek + Perplexity search + Grok agentic",
+    "description": "Minimal OpenRouter stack - DeepSeek + free models",
     "usage": "Models listed here are exposed through OpenRouter. Aliases are case-insensitive.",
     "note": "Kept minimal - use local Ollama models for most tasks, OpenRouter for web search and overflow",
     "routing_logic": {
-      "web_search": "Sonar Reasoning (DeepSeek R1 + citations)",
-      "quick_lookup": "Sonar (cheapest search)",
+      "free_multimodal": "MiMo V2 Flash (Xiaomi free model)",
       "heavy_reasoning": "DeepSeek V3.2",
-      "agentic_tools": "Grok 4.1 Fast (best tool calling, 2M context)",
       "multimodal_images": "Llama 4 Maverick (1M context, vision, cheap)"
     },
     "last_updated": "January 2026"
   },
   "models": [
-    {
-      "model_name": "x-ai/grok-4.1-fast",
-      "aliases": ["grok", "grok4", "grok-fast", "agentic", "tool-calling"],
-      "description": "Grok 4.1 Fast - Best agentic tool calling, 2M context, reasoning toggleable ($0.20/M in, $0.50/M out)",
-      "context_window": 2097152,
-      "max_output_tokens": 131072,
-      "supports_extended_thinking": true,
-      "supports_json_mode": true,
-      "supports_function_calling": true,
-      "supports_images": false,
-      "max_image_size_mb": 0.0,
-      "intelligence_score": 16
-    },
     {
       "model_name": "meta-llama/llama-4-maverick",
       "aliases": ["maverick", "llama4", "vision", "multimodal", "images"],
@@ -53,30 +38,57 @@
       "intelligence_score": 17
     },
     {
-      "model_name": "perplexity/sonar-reasoning",
-      "aliases": ["sonar-reasoning", "web-search", "research", "perplexity"],
-      "description": "Sonar Reasoning - DeepSeek R1 + web search, uncensored, US hosted, citations ($1/M in, $5/M out)",
-      "context_window": 127000,
-      "max_output_tokens": 8000,
+      "model_name": "minimax/minimax-m2.1",
+      "aliases": ["minimax", "m2.1", "m2"],
+      "description": "MiniMax M2.1 - 10B params, optimized for coding/agentic workflows, 49.4% Multi-SWE-Bench ($0.28/M in, $1.20/M out)",
+      "context_window": 196608,
+      "max_output_tokens": 32768,
       "supports_extended_thinking": true,
-      "supports_json_mode": false,
-      "supports_function_calling": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
       "supports_images": false,
       "max_image_size_mb": 0.0,
       "intelligence_score": 15
     },
     {
-      "model_name": "perplexity/sonar",
-      "aliases": ["sonar", "quick-search", "sonar-cheap"],
-      "description": "Sonar - Lightweight web search, fastest and cheapest with citations ($1/M in, $1/M out)",
-      "context_window": 127000,
-      "max_output_tokens": 8000,
-      "supports_extended_thinking": false,
-      "supports_json_mode": false,
-      "supports_function_calling": false,
+      "model_name": "z-ai/glm-4.7",
+      "aliases": ["glm", "glm4", "glm-4.7"],
+      "description": "GLM 4.7 - Z.AI flagship, enhanced programming and multi-step reasoning/execution ($0.40/M in, $1.50/M out)",
+      "context_window": 202752,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
       "supports_images": false,
       "max_image_size_mb": 0.0,
-      "intelligence_score": 12
+      "intelligence_score": 15
+    },
+    {
+      "model_name": "mistralai/devstral-2512:free",
+      "aliases": ["devstral", "devstral2", "mistral-code", "mistral-free"],
+      "description": "Devstral 2 - 123B dense transformer, agentic coding specialist, 256K context, MIT license (FREE)",
+      "context_window": 262144,
+      "max_output_tokens": 32768,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "xiaomi/mimo-v2-flash:free",
+      "aliases": ["mimo", "mimo-flash", "xiaomi"],
+      "description": "MiMo V2 Flash - Xiaomi's free multimodal model via OpenRouter (reasoning disabled for agentic use)",
+      "context_window": 262144,
+      "max_output_tokens": 8192,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": false,
+      "supports_images": true,
+      "max_image_size_mb": 10.0,
+      "intelligence_score": 12,
+      "default_reasoning_effort": "none"
     }
   ]
 }

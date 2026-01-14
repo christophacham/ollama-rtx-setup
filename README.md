@@ -2,7 +2,7 @@
 
 Complete setup for running powerful local AI models with Ollama on NVIDIA RTX 5090 (32GB VRAM) or similar high-end GPUs. Includes web search integration via Open WebUI and Perplexica.
 
-> **Last Updated:** December 2025 - Includes DeepSeek-R1-0528, Qwen3, Phi-4, Gemma 3, and Llama 3.3
+> **Last Updated:** January 2026 - Includes DeepSeek-R1-0528, Qwen3, Phi-4, Gemma 3, and Llama 3.3
 
 **[Full Documentation](https://christophacham.github.io/ollama-rtx-setup)** | [Quick Start](#quick-start) | [Model Guide](#recommended-models-2025) | [Troubleshooting](#troubleshooting)
 
