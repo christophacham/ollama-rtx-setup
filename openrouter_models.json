@@ -51,6 +51,19 @@
       "intelligence_score": 15
     },
     {
+      "model_name": "x-ai/grok-4.1-fast",
+      "aliases": ["grok", "grok-fast", "grok4", "grok-4.1"],
+      "description": "Grok 4.1 Fast - xAI's fast variant with 128K context, optimized for speed and efficiency",
+      "context_window": 131072,
+      "max_output_tokens": 16384,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "max_image_size_mb": 0.0,
+      "intelligence_score": 16
+    },
+    {
       "model_name": "z-ai/glm-4.7",
       "aliases": ["glm", "glm4", "glm-4.7"],
       "description": "GLM 4.7 - Z.AI flagship, enhanced programming and multi-step reasoning/execution ($0.40/M in, $1.50/M out)",
