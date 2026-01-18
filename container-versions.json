@@ -1,6 +1,6 @@
 {
   "registry": "ghcr.io/christophacham/ollama-rtx-setup",
-  "last_check": "2026-01-14T06:16:42.1597346+00:00",
+  "last_check": "2026-01-18T06:13:31.5249622+00:00",
   "images": {
     "open-webui:cuda": {
       "upstream": "ghcr.io/open-webui/open-webui:cuda",
@@ -18,9 +18,9 @@
     },
     "searxng:latest": {
       "upstream": "docker.io/searxng/searxng:latest",
-      "upstream_digest": "sha256:35e3520e53621e22566330d876d2a36e4a556628b6567bf2706ceb211c6d9c07",
-      "local_digest": "sha256:35e3520e53621e22566330d876d2a36e4a556628b6567bf2706ceb211c6d9c07",
-      "synced_at": "2026-01-12T06:16:35.7341399+00:00",
+      "upstream_digest": "sha256:445319b907a0e01d0ff5bf8192be396b1c439a47e12675d626ce29af1b439d93",
+      "local_digest": "sha256:445319b907a0e01d0ff5bf8192be396b1c439a47e12675d626ce29af1b439d93",
+      "synced_at": "2026-01-18T06:13:37.4464111+00:00",
       "status": "synced"
     },
     "perplexica-backend:main": {
@@ -32,10 +32,10 @@
     },
     "perplexica-frontend:main": {
       "upstream": "docker.io/itzcrazykns1337/perplexica-frontend:main",
-      "upstream_digest": null,
-      "local_digest": null,
-      "synced_at": null,
-      "status": "pending"
+      "upstream_digest": "sha256:1f0e79e60306e9d016b335b51d3aa21f68bb11f911d206b6564abdae6c1c050f",
+      "local_digest": "sha256:1f0e79e60306e9d016b335b51d3aa21f68bb11f911d206b6564abdae6c1c050f",
+      "synced_at": "2026-01-18T06:13:38.1646979+00:00",
+      "status": "synced"
     }
   }
 }
